@@ -466,7 +466,9 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.distances.push_back(10);
         partition_config.distances.push_back(100);
 
-
+#ifdef MODE_CLUSTER_COARSENING
+        partition_config.clustering_filename = "";
+#endif
 
 }
 

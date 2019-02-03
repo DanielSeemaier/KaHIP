@@ -159,6 +159,13 @@ int parse_parameters(int argn, char **argv,
         struct arg_str *distance_parameter_string            = arg_str0(NULL, "distance_parameter_string", NULL, "Specify as 1:10:100 if cores on the same chip have distance 1, PEs in the same rack have distance 10, ... and so forth.");
         struct arg_lit *online_distances                     = arg_lit0(NULL, "online_distances", "Do not store processor distances in a matrix, but do recomputation. (Default: disabled)");
 
+#ifdef MODE_CLUSTER_COARSENING
+        //cluster coarsening stuff
+        //
+        //
+        struct arg_str *clustering_filename = arg_str0(NULL, "clustering", NULL, "Pre-calculated clustering to guide coarsening.");
+#endif
+
         struct arg_end *end                                  = arg_end(100);
 
         // Define argtable.
@@ -253,7 +260,10 @@ int parse_parameters(int argn, char **argv,
 #elif defined MODE_LABELPROPAGATION
                 cluster_upperbound,
                 label_propagation_iterations,
-                filename_output, 
+                filename_output,
+#endif
+#ifdef MODE_CLUSTER_COARSENING
+                clustering_filename,
 #endif
                 end
         };
@@ -1030,6 +1040,12 @@ int parse_parameters(int argn, char **argv,
         } else {
                 partition_config.cluster_upperbound = std::numeric_limits< NodeWeight >::max()/2;
         }
+
+#ifdef MODE_CLUSTER_COARSENING
+        if (clustering_filename->count > 0) {
+                partition_config.clustering_filename = clustering_filename->sval[0];
+        }
+#endif
 
         return 0;
 }

@@ -14,6 +14,7 @@
 #include "uncoarsening/uncoarsening.h"
 #include "uncoarsening/refinement/mixed_refinement.h"
 #include "w_cycles/wcycle_partitioner.h"
+#include "tools/timer.h"
 
 graph_partitioner::graph_partitioner() {
 
@@ -163,8 +164,12 @@ void graph_partitioner::perform_recursive_partitioning_internal(PartitionConfig 
 void graph_partitioner::single_run( PartitionConfig & config, graph_access & G) {
 
         for( unsigned i = 1; i <= config.global_cycle_iterations; i++) {
-                PRINT(std::cout <<  "vcycle " << i << " of " << config.global_cycle_iterations  << std::endl;)
-                        if(config.use_wcycles || config.use_fullmultigrid)  {
+            if (!config.initial_partitioning) {
+                std::cout << "[MODE_CLUSTER_COARSENING] vcycle: " << i << " of: " << config.global_cycle_iterations  << std::endl;
+            }
+            PRINT(std::cout << "vcycle " << i << " of " << config.global_cycle_iterations  << std::endl;)
+
+            if(config.use_wcycles || config.use_fullmultigrid)  {
                                 wcycle_partitioner w_partitioner;
                                 w_partitioner.perform_partitioning(config, G);
                         } else {
@@ -186,9 +191,61 @@ void graph_partitioner::single_run( PartitionConfig & config, graph_access & G) 
                                                 config.edge_rating = SEPARATOR_LOG;
                                         } 
                                 }
+
+                                timer t;
+
                                 coarsen.perform_coarsening(config, G, hierarchy);
+
+                                if (!config.initial_partitioning) {
+                                    std::cout << "[MODE_CLUSTER_COARSENING] time_coarsening: " << t.elapsed() << std::endl;
+
+                                    std::size_t size = hierarchy.size();
+                                    std::cout << "[MODE_CLUSTER_COARSENING] no_hierarchy_levels: " << size << std::endl;
+
+                                    double base_no_nodes = static_cast<double>(G.number_of_nodes());
+                                    double base_no_edges = static_cast<double>(G.number_of_edges());
+                                    for (std::size_t i = 0; i < size; ++i) {
+                                        graph_access *tmp = hierarchy[i];
+                                        NodeID no_nodes = tmp->number_of_nodes();
+                                        EdgeID no_edges = tmp->number_of_edges();
+                                        std::cout << "[MODE_CLUSTER_COARSENING] level: " << i
+                                                << " no_nodes: " << no_nodes
+                                                << " no_edges: " << no_edges << std::endl;
+                                        std::cout << "[MODE_CLUSTER_COARSENING] level: " << i
+                                                << " nodes_ratio: " << static_cast<double>(no_nodes) / base_no_nodes
+                                                << " edges_ratio: " << static_cast<double>(no_edges) / base_no_edges
+                                                << std::endl;
+                                    }
+
+                                }
+
+                                t.restart();
                                 init_part.perform_initial_partitioning(config, hierarchy);
+
+                                quality_metrics qm;
+                                int initial_cut = 0;
+                                int final_cut = 0;
+
+                                if (!config.initial_partitioning) {
+                                    initial_cut = qm.edge_cut(*(hierarchy.get_coarsest()));
+
+                                    std::cout << "[MODE_CLUSTER_COARSENING] time_initial_partitioning: " << t.elapsed() << std::endl;
+                                    std::cout << "[MODE_CLUSTER_COARSENING] initial_cut: " << initial_cut << std::endl;
+                                    std::cout << "[MODE_CLUSTER_COARSENING] initial_balance: " << qm.balance(*(hierarchy.get_coarsest())) << std::endl;
+                                }
+
+                                t.restart();
                                 uncoarsen.perform_uncoarsening(config, hierarchy);
+
+                                if (!config.initial_partitioning) {
+                                    final_cut = qm.edge_cut(G);
+
+                                    std::cout << "[MODE_CLUSTER_COARSENING] time_uncoarsening: " << t.elapsed() << std::endl;
+                                    std::cout << "[MODE_CLUSTER_COARSENING] final_cut: " << final_cut << std::endl;
+                                    std::cout << "[MODE_CLUSTER_COARSENING] final_balance: " << qm.balance(G) << std::endl;
+                                    std::cout << "[MODE_CLUSTER_COARSENING] cut_ratio: " << static_cast<double>(final_cut) /
+                                            static_cast<double>(initial_cut) << std::endl;
+                                }
                                 if( config.mode_node_separators ) {
                                         quality_metrics qm;
                                         std::cout <<  "vcycle result " << qm.separator_weight(G)  << std::endl;

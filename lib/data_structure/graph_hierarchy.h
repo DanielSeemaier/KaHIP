@@ -24,7 +24,22 @@ public:
         graph_access  * pop_finer_and_project_ns( PartialBoundary & separator );
         graph_access  * get_coarsest();
         CoarseMapping * get_mapping_of_current_finer();
-               
+
+        inline
+        graph_access *operator[](std::size_t i) {
+                std::stack<graph_access *> tmp_stack;
+                for (std::size_t j = 0; j < i; ++j) {
+                        tmp_stack.push(m_the_graph_hierarchy.top());
+                        m_the_graph_hierarchy.pop();
+                }
+                graph_access *G = m_the_graph_hierarchy.top();
+                while (!tmp_stack.empty()) {
+                        m_the_graph_hierarchy.push(tmp_stack.top());
+                        tmp_stack.pop();
+                }
+                return G;
+        }
+
         bool isEmpty();
         unsigned int size();
 private:

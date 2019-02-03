@@ -1,0 +1,6 @@
+.idea
+.sconsign.dblite
+config.log
+optimized/
+optimized_output/
+data/

@@ -391,6 +391,11 @@ struct PartitionConfig
         //=======================================
         bool enable_omp;
 
+		//=======================================
+		//=============CLUSTER COARSENING========
+		//=======================================
+		std::string clustering_filename;
+
         void LogDump(FILE *out) const {
         }
 };

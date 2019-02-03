@@ -95,6 +95,13 @@ void random_matching::match(const PartitionConfig & partition_config,
 
                                         if(edge_matching[target] == target 
                                         && coarser_weight <= partition_config.max_vertex_weight) {
+#ifdef MODE_CLUSTER_COARSENING
+                                                if (partition_config.combine
+                                                && G.getSecondPartitionIndex(curNode) != G.getSecondPartitionIndex(target)) {
+                                                        continue;
+                                                }
+#endif
+
                                                 matchingPartner = target;
                                                 ASSERT_NEQ(curNode, target);
                                                 break;
