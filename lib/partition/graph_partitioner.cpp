@@ -168,6 +168,10 @@ void graph_partitioner::single_run( PartitionConfig & config, graph_access & G) 
                 std::cout << "[MODE_CLUSTER_COARSENING] vcycle: " << i << " of: " << config.global_cycle_iterations  << std::endl;
             }
             PRINT(std::cout << "vcycle " << i << " of " << config.global_cycle_iterations  << std::endl;)
+            if (config.graph_allready_partitioned) {
+                quality_metrics qm;
+                std::cout << "[MODE_CLUSTER_COARSENING] vcycle: " << i << " cut: " << qm.edge_cut(G) << " balance: " << qm.balance(G) << std::endl;
+            }
 
             if(config.use_wcycles || config.use_fullmultigrid)  {
                                 wcycle_partitioner w_partitioner;

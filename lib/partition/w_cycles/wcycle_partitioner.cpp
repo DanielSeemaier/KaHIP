@@ -21,6 +21,7 @@
 #include "uncoarsening/refinement/label_propagation_refinement/label_propagation_refinement.h"
 #include "uncoarsening/refinement/refinement.h"
 #include "wcycle_partitioner.h"
+#include "tools/quality_metrics.h"
 
 int wcycle_partitioner::perform_partitioning(const PartitionConfig & config, graph_access & G) {
         PartitionConfig  cfg = config; 
@@ -85,6 +86,10 @@ int wcycle_partitioner::perform_partitioning_recursive( PartitionConfig & partit
                                      permutation);
         }
 
+        std::cout << "[MODE_CLUSTER_COARSENING] level: " << m_level
+                << " coarser_no_nodes: " << coarser->number_of_nodes()
+                << " coarser_no_edges: " << coarser->number_of_edges() << std::endl;
+
         coarser->set_partition_count(partition_config.k);
         complete_boundary* coarser_boundary =  NULL;
         refinement* refine = NULL;
@@ -97,20 +102,32 @@ int wcycle_partitioner::perform_partitioning_recursive( PartitionConfig & partit
         }
 
         if(!m_coarsening_stop_rule->stop(no_of_finer_vertices, no_of_coarser_vertices)) {
-
                 PartitionConfig cfg; cfg = partition_config;
 
                 double factor = partition_config.balance_factor;
                 cfg.upper_bound_partition = (factor +1.0)*partition_config.upper_bound_partition;
 
+                std::cout << "[MODE_CLUSTER_COARSENING] performing initial_partitioning on level " << m_level << std::endl;
 	        initial_partitioning init_part;
 		init_part.perform_initial_partitioning(cfg, *coarser);
+
+		        quality_metrics qm;
+		        std::cout << "[MODE_CLUSTER_COARSENING] level: " << m_level
+		                << " no_nodes: " << coarser->number_of_nodes()
+		                << " no_edges: " << coarser->number_of_edges()
+		                << " initial_cut: " << qm.edge_cut(*coarser)
+		                << " balance: " << qm.balance(*coarser)
+		                << " no_blocks: " << coarser->get_partition_count() << std::endl;
 
                 if(!partition_config.label_propagation_refinement) coarser_boundary->build();
 
                 //PRINT(std::cout <<  "upper bound " <<  cfg.upper_bound_partition  << std::endl;)
                 improvement += refine->perform_refinement(cfg, *coarser, *coarser_boundary);
                 m_deepest_level = m_level + 1;
+
+                std::cout << "[MODE_CLUSTER_COARSENING] level: " << m_level << " initial_cut_after_refinement: " << qm.edge_cut(*coarser)
+                        << " balance_after_refinement: " << qm.balance(*coarser)
+                        << " no_blocks_after_refinement: " << coarser->get_partition_count() << std::endl;
         } else {
                 m_level++;
 
@@ -188,7 +205,7 @@ int wcycle_partitioner::perform_partitioning_recursive( PartitionConfig & partit
 		if( current_boundary != NULL ) delete current_boundary;
 	}
 
-        //std::cout <<  "finer " <<  no_of_finer_vertices  << std::endl;
+        std::cout <<  "finer " <<  no_of_finer_vertices  << std::endl;
         delete contracter;
         delete coarse_mapping;
         delete coarser_boundary;
