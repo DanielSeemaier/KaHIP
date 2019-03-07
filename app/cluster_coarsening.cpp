@@ -87,7 +87,7 @@ int main(int argn, char **argv) {
         if (partition_config.bcc_enable && !partition_config.bcc_full_cluster_contraction) {
                 BCC::compute_and_set_clustering(G, partition_config);
         } else if (partition_config.bcc_enable && partition_config.bcc_full_cluster_contraction) {
-        	std::cout << "[MODE_CLUSTER_COARSENING] will not call VieClus at this point because bcc_full_cluster_contraction is enabled" << std::endl;
+        		std::cout << "[MODE_CLUSTER_COARSENING] will not call VieClus at this point because bcc_full_cluster_contraction is enabled" << std::endl;
         }
 
         // ***************************** perform partitioning ***************************************       

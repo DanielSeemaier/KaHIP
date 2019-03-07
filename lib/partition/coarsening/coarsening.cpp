@@ -67,7 +67,7 @@ void coarsening::perform_coarsening(const PartitionConfig & partition_config, gr
 
                 if (partition_config.bcc_full_cluster_contraction && !partition_config.initial_partitioning) {
                         std::cout << "[MODE_CLUSTER_COARSENING] calculating  a clustering on level " << level << std::endl;
-                        BCC::compute_and_set_clustering(*finer, const_cast<PartitionConfig &>(partition_config));
+                        BCC::compute_and_set_clustering(*finer, copy_of_partition_config);
                 }
 
                 coarsening_config.configure_coarsening(copy_of_partition_config, &edge_matcher, level);

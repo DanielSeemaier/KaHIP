@@ -226,6 +226,10 @@ void graph_partitioner::single_run( PartitionConfig & config, graph_access & G) 
 
                                 }
 
+                                if (config.bcc_full_cluster_contraction && !config.initial_partitioning) {
+                                	config.combine = true;
+                                }
+
                                 t.restart();
                                 init_part.perform_initial_partitioning(config, hierarchy);
 

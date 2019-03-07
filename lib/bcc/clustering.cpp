@@ -12,7 +12,9 @@ double compute_and_set_clustering(graph_access &G, PartitionConfig &partition_co
 	VieClus::Graph graph{
 			G.number_of_nodes(),
 			G.UNSAFE_metis_style_xadj_array(),
-			G.UNSAFE_metis_style_adjncy_array()
+			G.UNSAFE_metis_style_adjncy_array(),
+			G.UNSAFE_metis_style_vwgt_array(),
+			G.UNSAFE_metis_style_adjwgt_array()
 	};
 	int clustering_k = -1;
 	auto partition_map = std::make_unique<int[]>(G.number_of_nodes());
@@ -44,8 +46,11 @@ double compute_and_set_clustering(graph_access &G, PartitionConfig &partition_co
 	G.resizeSecondPartitionIndex(G.number_of_nodes());
 	for (NodeID v = 0; v < G.number_of_nodes(); ++v)
 		G.setSecondPartitionIndex(v, partition_map[v]);
+
 	delete[] graph.xadj;
 	delete[] graph.adjncy;
+	delete[] graph.vwgt;
+	delete[] graph.adjwgt;
 
 	partition_config.combine = true;
 
