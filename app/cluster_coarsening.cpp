@@ -14,6 +14,8 @@
 #include <string.h>
 #include <memory>
 
+#include <VieClus_interface.h>
+
 #include "balance_configuration.h"
 #include "data_structure/graph_access.h"
 #include "data_structure/matrix/normal_matrix.h"
@@ -36,6 +38,8 @@ int main(int argn, char **argv) {
         std::cerr << "built " __FILE__ << " without MODE_CLUSTER_COARSENING; fix your build script" << std::endl;
         std::exit(1);
 #endif
+
+		VieClus::setup(&argn, &argv);
 
         PartitionConfig partition_config;
         std::string graph_filename;
@@ -80,8 +84,10 @@ int main(int argn, char **argv) {
         std::cout << "[MODE_CLUSTER_COARSENING] no_edges: " << G.number_of_edges() << std::endl;
         std::cout << "[MODE_CLUSTER_COARSENING] no_blocks: " << partition_config.k << std::endl;
 
-        if (partition_config.bcc_enable) {
+        if (partition_config.bcc_enable && !partition_config.bcc_full_cluster_contraction) {
                 BCC::compute_and_set_clustering(G, partition_config);
+        } else if (partition_config.bcc_enable && partition_config.bcc_full_cluster_contraction) {
+        	std::cout << "[MODE_CLUSTER_COARSENING] will not call VieClus at this point because bcc_full_cluster_contraction is enabled" << std::endl;
         }
 
         // ***************************** perform partitioning ***************************************       
@@ -201,5 +207,7 @@ int main(int argn, char **argv) {
         }
 
         graph_io::writePartition(G, filename.str());
+
+        VieClus::teardown();
 
 }

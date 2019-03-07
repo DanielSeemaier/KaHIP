@@ -19,6 +19,8 @@
 #include "matching/random_matching.h"
 #include "stop_rules/stop_rules.h"
 
+#include "bcc/clustering.h"
+
 coarsening::coarsening() {
 
 }
@@ -62,6 +64,11 @@ void coarsening::perform_coarsening(const PartitionConfig & partition_config, gr
                 coarse_mapping        = new CoarseMapping();
                 Matching edge_matching;
                 NodePermutationMap permutation;
+
+                if (partition_config.bcc_full_cluster_contraction && !partition_config.initial_partitioning) {
+                        std::cout << "[MODE_CLUSTER_COARSENING] calculating  a clustering on level " << level << std::endl;
+                        BCC::compute_and_set_clustering(*finer, const_cast<PartitionConfig &>(partition_config));
+                }
 
                 coarsening_config.configure_coarsening(copy_of_partition_config, &edge_matcher, level);
                 if( partition_config.matching_type != CLUSTER_COARSENING) 

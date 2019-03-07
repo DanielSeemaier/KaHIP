@@ -22,6 +22,7 @@
 #include "uncoarsening/refinement/refinement.h"
 #include "wcycle_partitioner.h"
 #include "tools/quality_metrics.h"
+#include "bcc/clustering.h"
 
 int wcycle_partitioner::perform_partitioning(const PartitionConfig & config, graph_access & G) {
         PartitionConfig  cfg = config; 
@@ -65,6 +66,11 @@ int wcycle_partitioner::perform_partitioning_recursive( PartitionConfig & partit
 
         Matching edge_matching;
         NodePermutationMap permutation;
+
+        if (partition_config.bcc_full_cluster_contraction && !partition_config.initial_partitioning) {
+                std::cout << "[MODE_CLUSTER_COARSENING] calculating  a clustering on level " << m_level << std::endl;
+                BCC::compute_and_set_clustering(*finer, const_cast<PartitionConfig &>(partition_config));
+        }
 
         coarsening_configurator coarsening_config;
         coarsening_config.configure_coarsening(partition_config, &edge_matcher, m_level);
