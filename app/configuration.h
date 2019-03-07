@@ -467,7 +467,12 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.distances.push_back(100);
 
 #ifdef MODE_CLUSTER_COARSENING
-        partition_config.clustering_filename = "";
+        partition_config.bcc_enable = false;
+        partition_config.bcc_default_clustering = false;
+        partition_config.bcc_shallow_clustering = false;
+        partition_config.bcc_shallow_no_lp_clustering = false;
+        partition_config.bcc_full_cluster_contraction = false;
+        partition_config.bcc_time_limit = 0;
 #endif
 
 }

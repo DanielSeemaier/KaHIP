@@ -11,7 +11,8 @@
 #include <regex.h>
 #include <sstream>
 #include <stdio.h>
-#include <string.h> 
+#include <string.h>
+#include <memory>
 
 #include "balance_configuration.h"
 #include "data_structure/graph_access.h"
@@ -27,6 +28,8 @@
 #include "quality_metrics.h"
 #include "random_functions.h"
 #include "timer.h"
+
+#include "bcc/clustering.h"
 
 int main(int argn, char **argv) {
 #ifndef MODE_CLUSTER_COARSENING
@@ -77,13 +80,8 @@ int main(int argn, char **argv) {
         std::cout << "[MODE_CLUSTER_COARSENING] no_edges: " << G.number_of_edges() << std::endl;
         std::cout << "[MODE_CLUSTER_COARSENING] no_blocks: " << partition_config.k << std::endl;
 
-        if (!partition_config.clustering_filename.empty()) {
-                std::cout << "[MODE_CLUSTER_COARSENING] clustering_filename: " << partition_config.clustering_filename << std::endl;
-                int clusters = graph_io::readSecondPartition(G, partition_config.clustering_filename);
-                if (clusters < 0) std::exit(1);
-                std::cout << "[MODE_CLUSTER_COARSENING] no_clusters: " << clusters << std::endl;
-
-                partition_config.combine = true;
+        if (partition_config.bcc_enable) {
+                BCC::compute_and_set_clustering(G, partition_config);
         }
 
         // ***************************** perform partitioning ***************************************       

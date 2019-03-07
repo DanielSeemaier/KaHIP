@@ -394,7 +394,12 @@ struct PartitionConfig
 		//=======================================
 		//=============CLUSTER COARSENING========
 		//=======================================
-		std::string clustering_filename;
+		bool bcc_enable;
+		bool bcc_default_clustering;
+		bool bcc_shallow_clustering;
+		bool bcc_shallow_no_lp_clustering;
+		int bcc_time_limit;
+		bool bcc_full_cluster_contraction;
 
         void LogDump(FILE *out) const {
         }

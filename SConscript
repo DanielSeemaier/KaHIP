@@ -100,9 +100,10 @@ libmapping                = ['lib/mapping/local_search_mapping.cpp',
                              'lib/mapping/mapping_algorithms.cpp',
                              'lib/mapping/construct_mapping.cpp' ]
 
+
 libspac_files = ['lib/spac/spac.cpp']
 
-libcluster_coarsening_files = []
+libbcc = ['lib/bcc/clustering.cpp']
 
 if env['program'] == 'kaffpa':
         env.Append(CXXFLAGS = '-DMODE_KAFFPA')
@@ -166,6 +167,7 @@ if env['program'] == 'spac':
         env.Program('edge_partitioning', ['app/spac.cpp']+libkaffpa_files+libmapping+libspac_files, LIBS=['gomp'])
 
 if env['program'] == 'cluster_coarsening':
-        env.Append(CXXFLAGS = '-DMODE_KAFFPA -DMODE_CLUSTER_COARSENING')
-        env.Append(CCFLAGS = '-DMODE_KAFFPA -DMODE_CLUSTER_COARSENING')
-        env.Program('cluster_coarsening', ['app/cluster_coarsening.cpp']+libkaffpa_files+libmapping+libcluster_coarsening_files, LIBS=['gomp'])
+        env['CXX'] = 'mpicxx'
+        env.Append(CXXFLAGS = '-DMODE_KAFFPA -DMODE_CLUSTER_COARSENING -std=c++14')
+        env.Append(CCFLAGS = '-DMODE_KAFFPA -DMODE_CLUSTER_COARSENING -std=c++14')
+        env.Program('cluster_coarsening', ['app/cluster_coarsening.cpp']+libkaffpa_files+libmapping+libbcc, LIBS=['gomp', 'vieclus'])

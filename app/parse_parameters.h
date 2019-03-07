@@ -163,7 +163,9 @@ int parse_parameters(int argn, char **argv,
         //cluster coarsening stuff
         //
         //
-        struct arg_str *clustering_filename = arg_str0(NULL, "clustering", NULL, "Pre-calculated clustering to guide coarsening.");
+        struct arg_str *bcc_clustering_mode = arg_str0(NULL, "bcc-clustering", NULL, "Normal or shallow clustering via VieClus One of: none, default, shallow, shallownolp. Default: none.");
+        struct arg_int *bcc_full_cluster_contraction = arg_int0(NULL, "bcc-full-cluster-contraction", NULL, "Generate new clustering for every contraction level. Default: 0 = disabled.");
+        struct arg_int *bcc_time_limit = arg_int0(NULL, "bcc-time-limit", NULL, "Time limit for VieClus in seconds. Default: 0");
 #endif
 
         struct arg_end *end                                  = arg_end(100);
@@ -263,7 +265,7 @@ int parse_parameters(int argn, char **argv,
                 filename_output,
 #endif
 #ifdef MODE_CLUSTER_COARSENING
-                clustering_filename,
+                bcc_clustering_mode, bcc_full_cluster_contraction, bcc_time_limit,
 #endif
                 end
         };
@@ -1042,8 +1044,35 @@ int parse_parameters(int argn, char **argv,
         }
 
 #ifdef MODE_CLUSTER_COARSENING
-        if (clustering_filename->count > 0) {
-                partition_config.clustering_filename = clustering_filename->sval[0];
+        if (bcc_clustering_mode->count > 0) {
+                partition_config.bcc_enable = true;
+                std::string arg = bcc_clustering_mode->sval[0];
+                if (arg == "none") {
+                        // nothing to do
+                } else if (arg == "default") {
+                        partition_config.bcc_default_clustering = true;
+                } else if (arg == "shallow") {
+                        partition_config.bcc_shallow_clustering = true;
+                } else if (arg == "shallownolp") {
+                        partition_config.bcc_shallow_no_lp_clustering = true;
+                } else {
+                        fprintf(stderr, "Invalid clustering mode: \"%s\"\n", arg.c_str());
+                        exit(0);
+                }
+        }
+        if (bcc_full_cluster_contraction->count > 0) {
+                if (!partition_config.bcc_enable) {
+                        fprintf(stderr, "Invalid configuration: can't enable bcc_full_cluster_contraction without bcc_clustering_mode\n");
+                        exit(0);
+                }
+                partition_config.bcc_full_cluster_contraction = true;
+        }
+        if (bcc_time_limit->count > 0) {
+                if (!partition_config.bcc_enable) {
+                        fprintf(stderr, "Invalid configuration: can't set bcc_time_limit without bcc_clustering_mode\n");
+                        exit(0);
+                }
+                partition_config.bcc_time_limit = bcc_time_limit->ival[0];
         }
 #endif
 
