@@ -174,6 +174,9 @@ void graph_partitioner::single_run( PartitionConfig & config, graph_access & G) 
             }
 
             if(config.use_wcycles || config.use_fullmultigrid)  {
+								if (config.bcc_full_cluster_contraction && !config.initial_partitioning) {
+									config.combine = true;
+								}
                                 wcycle_partitioner w_partitioner;
                                 w_partitioner.perform_partitioning(config, G);
 

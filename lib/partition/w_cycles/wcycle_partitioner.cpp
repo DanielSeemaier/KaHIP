@@ -69,7 +69,7 @@ int wcycle_partitioner::perform_partitioning_recursive( PartitionConfig & partit
 
         if (partition_config.bcc_full_cluster_contraction && !partition_config.initial_partitioning) {
                 std::cout << "[MODE_CLUSTER_COARSENING] calculating  a clustering on level " << m_level << std::endl;
-                BCC::compute_and_set_clustering(*finer, const_cast<PartitionConfig &>(partition_config));
+                BCC::compute_and_set_clustering(*finer, partition_config);
         }
 
         coarsening_configurator coarsening_config;
