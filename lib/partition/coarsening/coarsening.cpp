@@ -20,6 +20,7 @@
 #include "stop_rules/stop_rules.h"
 
 #include "bcc/clustering.h"
+#include "bcc/ExternalPartitionMap.h"
 
 coarsening::coarsening() {
 
@@ -68,6 +69,11 @@ void coarsening::perform_coarsening(const PartitionConfig & partition_config, gr
                 bool bcc = partition_config.bcc_full_cluster_contraction && !partition_config.initial_partitioning;
 
                 if (bcc) {
+                		BCC::ExternalPartitionMap backup;
+                		if (partition_config.bcc_combine == 1) {
+							backup.set(*finer);
+                		}
+
                         std::cout << "[MODE_CLUSTER_COARSENING] calculating  a clustering on level " << level << std::endl;
                         BCC::compute_and_set_clustering(*finer, copy_of_partition_config);
 
@@ -76,6 +82,8 @@ void coarsening::perform_coarsening(const PartitionConfig & partition_config, gr
 							coarse_mapping->resize(finer->number_of_nodes());
 							for (NodeID u = 0; u < finer->number_of_nodes(); ++u) coarse_mapping->at(u) = finer->getPartitionIndex(u);
 							no_of_coarser_vertices = finer->get_partition_count();
+
+							backup.apply(*finer);
                         }
                 }
 

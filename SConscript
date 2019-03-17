@@ -103,7 +103,7 @@ libmapping                = ['lib/mapping/local_search_mapping.cpp',
 
 libspac_files = ['lib/spac/spac.cpp']
 
-libbcc = ['lib/bcc/clustering.cpp']
+libbcc = ['lib/bcc/clustering.cpp', 'lib/bcc/ExternalPartitionMap.cpp']
 
 if env['program'] == 'kaffpa':
         env.Append(CXXFLAGS = '-DMODE_KAFFPA')
