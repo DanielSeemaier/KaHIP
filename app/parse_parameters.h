@@ -166,6 +166,7 @@ int parse_parameters(int argn, char **argv,
         struct arg_str *bcc_clustering_mode = arg_str0(NULL, "bcc-clustering", NULL, "Normal or shallow clustering via VieClus One of: none, default, shallow, shallownolp. Default: none.");
         struct arg_int *bcc_full_cluster_contraction = arg_int0(NULL, "bcc-full-cluster-contraction", NULL, "Generate new clustering for every contraction level. Default: 0 = disabled.");
         struct arg_int *bcc_time_limit = arg_int0(NULL, "bcc-time-limit", NULL, "Time limit for VieClus in seconds. Default: 0");
+        struct arg_str *bcc_combine_mode = arg_str0(NULL, "bcc-combine", NULL, "Use first or second partition index. Default: second");
 #endif
 
         struct arg_end *end                                  = arg_end(100);
@@ -265,7 +266,7 @@ int parse_parameters(int argn, char **argv,
                 filename_output,
 #endif
 #ifdef MODE_CLUSTER_COARSENING
-                bcc_clustering_mode, bcc_full_cluster_contraction, bcc_time_limit,
+                bcc_clustering_mode, bcc_full_cluster_contraction, bcc_time_limit, bcc_combine_mode,
 #endif
                 end
         };
@@ -1073,6 +1074,21 @@ int parse_parameters(int argn, char **argv,
                         exit(0);
                 }
                 partition_config.bcc_time_limit = bcc_time_limit->ival[0];
+        }
+        if (bcc_combine_mode->count > 0) {
+                if (!partition_config.bcc_enable) {
+                        fprintf(stderr, "Invalid configuration: can't set bcc_time_limit without bcc_clustering_mode\n");
+                        exit(0);
+                }
+                std::string arg = bcc_combine_mode->sval[0];
+                if (arg == "first") {
+                        partition_config.bcc_combine = 1;
+                } else if (arg == "second") {
+                        partition_config.bcc_combine = 2;
+                } else {
+                        fprintf(stderr, "Illegal value for bcc-combine-mode\n");
+                        exit(0);
+                }
         }
 #endif
 

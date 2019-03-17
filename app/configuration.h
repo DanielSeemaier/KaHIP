@@ -473,6 +473,7 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.bcc_shallow_no_lp_clustering = false;
         partition_config.bcc_full_cluster_contraction = false;
         partition_config.bcc_time_limit = 0;
+        partition_config.bcc_combine = 2;
 #endif
 
 }

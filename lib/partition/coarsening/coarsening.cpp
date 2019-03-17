@@ -65,17 +65,28 @@ void coarsening::perform_coarsening(const PartitionConfig & partition_config, gr
                 Matching edge_matching;
                 NodePermutationMap permutation;
 
-                if (partition_config.bcc_full_cluster_contraction && !partition_config.initial_partitioning) {
+                bool bcc = partition_config.bcc_full_cluster_contraction && !partition_config.initial_partitioning;
+
+                if (bcc) {
                         std::cout << "[MODE_CLUSTER_COARSENING] calculating  a clustering on level " << level << std::endl;
                         BCC::compute_and_set_clustering(*finer, copy_of_partition_config);
+
+                        if (partition_config.bcc_combine == 1) {
+							copy_of_partition_config.matching_type = CLUSTER_COARSENING;
+							coarse_mapping->resize(finer->number_of_nodes());
+							for (NodeID u = 0; u < finer->number_of_nodes(); ++u) coarse_mapping->at(u) = finer->getPartitionIndex(u);
+							no_of_coarser_vertices = finer->get_partition_count();
+                        }
                 }
 
                 coarsening_config.configure_coarsening(copy_of_partition_config, &edge_matcher, level);
-                if( partition_config.matching_type != CLUSTER_COARSENING) 
-                        rating.rate(*finer, level);
+				if( partition_config.matching_type != CLUSTER_COARSENING)
+						rating.rate(*finer, level);
 
-                edge_matcher->match(copy_of_partition_config, *finer, edge_matching, 
-                                    *coarse_mapping, no_of_coarser_vertices, permutation);
+                if (!bcc || partition_config.bcc_combine == 2) {
+                        edge_matcher->match(copy_of_partition_config, *finer, edge_matching,
+                                            *coarse_mapping, no_of_coarser_vertices, permutation);
+                }
 
                 delete edge_matcher; 
 

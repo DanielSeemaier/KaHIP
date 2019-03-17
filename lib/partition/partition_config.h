@@ -400,6 +400,7 @@ struct PartitionConfig
 		bool bcc_shallow_no_lp_clustering;
 		int bcc_time_limit;
 		bool bcc_full_cluster_contraction;
+		int bcc_combine;
 
         void LogDump(FILE *out) const {
         }

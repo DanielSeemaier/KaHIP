@@ -43,16 +43,28 @@ double compute_and_set_clustering(graph_access &G, PartitionConfig &partition_co
 		std::exit(1);
 	}
 	std::cout << "[MODE_CLUSTER_COARSENING] no_clusters: " << clustering_k << std::endl;
-	G.resizeSecondPartitionIndex(G.number_of_nodes());
-	for (NodeID v = 0; v < G.number_of_nodes(); ++v)
-		G.setSecondPartitionIndex(v, partition_map[v]);
+	if (partition_config.bcc_combine == 2) {
+		G.resizeSecondPartitionIndex(G.number_of_nodes());
+	} else if (partition_config.bcc_combine == 1) {
+		G.set_partition_count(clustering_k);
+	}
+
+	for (NodeID v = 0; v < G.number_of_nodes(); ++v) {
+		if (partition_config.bcc_combine == 1) {
+			G.setPartitionIndex(v, partition_map[v]);
+		} else {
+			G.setSecondPartitionIndex(v, partition_map[v]);
+		}
+	}
 
 	delete[] graph.xadj;
 	delete[] graph.adjncy;
 	delete[] graph.vwgt;
 	delete[] graph.adjwgt;
 
-	partition_config.combine = true;
+	if (partition_config.bcc_combine == 2) {
+		partition_config.combine = true;
+	}
 
 	return modularity;
 }
