@@ -44,15 +44,15 @@ EdgeWeight mixed_refinement::perform_refinement(PartitionConfig & config, graph_
                 }
 
         } else {
-                if(config.corner_refinement_enabled) {
+                if(config.corner_refinement_enabled) { // yes
                         overall_improvement += kway->perform_refinement(config, G, boundary);
                 } 
 
-                if(!config.quotient_graph_refinement_disabled) {
+                if(!config.quotient_graph_refinement_disabled) { // yes
                         overall_improvement += refine->perform_refinement(config, G, boundary);
                 }
 
-                if(config.kaffpa_perfectly_balanced_refinement) {
+                if(config.kaffpa_perfectly_balanced_refinement) { // no
                         overall_improvement += cycle_refine->perform_refinement(config, G, boundary);
                 }
         }

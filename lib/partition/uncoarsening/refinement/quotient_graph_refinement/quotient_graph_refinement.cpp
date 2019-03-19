@@ -105,7 +105,7 @@ EdgeWeight quotient_graph_refinement::perform_refinement(PartitionConfig & confi
                 overall_improvement += improvement;
 
                 EdgeWeight multitry_improvement = 0;
-                if(config.refinement_scheduling_algorithm == REFINEMENT_SCHEDULING_ACTIVE_BLOCKS_REF_KWAY ) {
+                if(config.refinement_scheduling_algorithm == REFINEMENT_SCHEDULING_ACTIVE_BLOCKS_REF_KWAY ) { // only strong
                         multitry_kway_fm kway_ref;
                         std::unordered_map<PartitionID, PartitionID> touched_blocks;
 

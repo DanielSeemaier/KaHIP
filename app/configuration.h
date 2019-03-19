@@ -29,7 +29,12 @@ class configuration {
 
                 void fastsocial( PartitionConfig & config );
                 void ecosocial( PartitionConfig & config );
-                void strongsocial( PartitionConfig & config ); 
+                void strongsocial( PartitionConfig & config );
+
+                void halfeco(PartitionConfig &partition_config);
+                void quartereco(PartitionConfig &partition_config);
+                void noqgrefeco(PartitionConfig &partition_config);
+                void nokwayrefeco(PartitionConfig &partition_config);
 
                 //void fastsocial_separator( PartitionConfig & config );
                 //void ecosocial_separator( PartitionConfig & config );
@@ -103,6 +108,28 @@ inline void configuration::eco( PartitionConfig & partition_config ) {
         partition_config.bipartition_tries                      = 4;
         partition_config.minipreps                              = 4;
         partition_config.initial_partitioning_repetitions       = 16;
+}
+
+inline void configuration::halfeco(PartitionConfig &partition_config) {
+        eco(partition_config);
+        partition_config.kway_rounds /= 2;
+        partition_config.max_flow_iterations /= 2;
+}
+
+inline void configuration::quartereco(PartitionConfig &partition_config) {
+        eco(partition_config);
+        partition_config.kway_rounds /= 4;
+        partition_config.max_flow_iterations /= 4;
+}
+
+inline void configuration::noqgrefeco(PartitionConfig &partition_config) {
+        eco(partition_config);
+        partition_config.quotient_graph_refinement_disabled = true;
+}
+
+inline void configuration::nokwayrefeco(PartitionConfig &partition_config) {
+        eco(partition_config);
+        partition_config.corner_refinement_enabled = false;
 }
 
 inline void configuration::fast( PartitionConfig & partition_config ) {

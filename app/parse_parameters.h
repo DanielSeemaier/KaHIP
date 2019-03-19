@@ -348,6 +348,14 @@ int parse_parameters(int argn, char **argv,
                         cfg.ecosocial(partition_config);
                 } else if (strcmp("ssocial", preconfiguration->sval[0]) == 0) {
                         cfg.strongsocial(partition_config);
+                } else if (strcmp("halfeco", preconfiguration->sval[0]) == 0) {
+                        cfg.halfeco(partition_config);
+                } else if (strcmp("quartereco", preconfiguration->sval[0]) == 0) {
+                        cfg.quartereco(partition_config);
+                } else if (strcmp("noqgrefeco", preconfiguration->sval[0]) == 0) {
+                        cfg.noqgrefeco(partition_config);
+                } else if (strcmp("nokwayrefeco", preconfiguration->sval[0]) == 0) {
+                        cfg.nokwayrefeco(partition_config);
                 } else {
                         fprintf(stderr, "Invalid preconfiguration variant: \"%s\"\n", preconfiguration->sval[0]);
                         exit(0);
