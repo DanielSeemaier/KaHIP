@@ -356,6 +356,14 @@ int parse_parameters(int argn, char **argv,
                         cfg.noqgrefeco(partition_config);
                 } else if (strcmp("nokwayrefeco", preconfiguration->sval[0]) == 0) {
                         cfg.nokwayrefeco(partition_config);
+                } else if (strcmp("halfecosocial", preconfiguration->sval[0]) == 0) {
+                        cfg.halfecosocial(partition_config);
+                } else if (strcmp("quarterecosocial", preconfiguration->sval[0]) == 0) {
+                        cfg.quarterecosocial(partition_config);
+                } else if (strcmp("noqgrefecosocial", preconfiguration->sval[0]) == 0) {
+                        cfg.noqgrefecosocial(partition_config);
+                } else if (strcmp("nokwayrefecosocial", preconfiguration->sval[0]) == 0) {
+                        cfg.nokwayrefeco(partition_config);
                 } else {
                         fprintf(stderr, "Invalid preconfiguration variant: \"%s\"\n", preconfiguration->sval[0]);
                         exit(0);

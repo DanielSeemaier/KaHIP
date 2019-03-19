@@ -36,6 +36,11 @@ class configuration {
                 void noqgrefeco(PartitionConfig &partition_config);
                 void nokwayrefeco(PartitionConfig &partition_config);
 
+				void halfecosocial(PartitionConfig &partition_config);
+				void quarterecosocial(PartitionConfig &partition_config);
+				void noqgrefecosocial(PartitionConfig &partition_config);
+				void nokwayrefecosocial(PartitionConfig &partition_config);
+
                 //void fastsocial_separator( PartitionConfig & config );
                 //void ecosocial_separator( PartitionConfig & config );
                 //void strongsocial_separator( PartitionConfig & config ); 
@@ -130,6 +135,28 @@ inline void configuration::noqgrefeco(PartitionConfig &partition_config) {
 inline void configuration::nokwayrefeco(PartitionConfig &partition_config) {
         eco(partition_config);
         partition_config.corner_refinement_enabled = false;
+}
+
+inline void configuration::halfecosocial(PartitionConfig &partition_config) {
+	ecosocial(partition_config);
+	partition_config.kway_rounds /= 2;
+	partition_config.max_flow_iterations /= 2;
+}
+
+inline void configuration::quarterecosocial(PartitionConfig &partition_config) {
+	ecosocial(partition_config);
+	partition_config.kway_rounds /= 4;
+	partition_config.max_flow_iterations /= 4;
+}
+
+inline void configuration::noqgrefecosocial(PartitionConfig &partition_config) {
+	ecosocial(partition_config);
+	partition_config.quotient_graph_refinement_disabled = true;
+}
+
+inline void configuration::nokwayrefecosocial(PartitionConfig &partition_config) {
+	ecosocial(partition_config);
+	partition_config.corner_refinement_enabled = false;
 }
 
 inline void configuration::fast( PartitionConfig & partition_config ) {
