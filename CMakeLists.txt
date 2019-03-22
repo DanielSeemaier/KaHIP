@@ -12,7 +12,7 @@ if(CCACHE_PROGRAM)
 endif()
 project(KaHIP C CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
@@ -174,70 +174,79 @@ add_library(libmapping OBJECT ${LIBMAPPING_SOURCE_FILES})
 set(LIBSPAC_SOURCE_FILES OBJECT lib/spac/spac.cpp)
 add_library(libspac ${LIBSPAC_SOURCE_FILES})
 
+set(LIBCLUSTER_COARSENING_FILES
+  lib/bcc/clustering.cpp
+  lib/bcc/ExternalPartitionMap.cpp)
+add_library(libcluster_coarsening ${LIBCLUSTER_COARSENING_FILES})
+
 # generate targets for each binary
-add_executable(kaffpa app/kaffpa.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_compile_definitions(kaffpa PRIVATE "-DMODE_KAFFPA")
-target_link_libraries(kaffpa ${OpenMP_CXX_LIBRARIES})
-install(TARGETS kaffpa DESTINATION bin)
-
-add_executable(evaluator app/evaluator.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_compile_definitions(evaluator PRIVATE "-DMODE_EVALUATOR")
-target_link_libraries(evaluator ${OpenMP_CXX_LIBRARIES})
-install(TARGETS evaluator DESTINATION bin)
-
-add_executable(node_separator app/node_separator_ml.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_compile_definitions(node_separator PRIVATE "-DMODE_NODESEP")
-target_link_libraries(node_separator ${OpenMP_CXX_LIBRARIES})
-install(TARGETS node_separator DESTINATION bin)
-
-add_executable(label_propagation app/label_propagation.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_compile_definitions(label_propagation PRIVATE "-DMODE_LABELPROPAGATION")
-target_link_libraries(label_propagation ${OpenMP_CXX_LIBRARIES})
-install(TARGETS label_propagation DESTINATION bin)
-
-add_executable(partition_to_vertex_separator app/partition_to_vertex_separator.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_compile_definitions(partition_to_vertex_separator PRIVATE "-DMODE_PARTITIONTOVERTEXSEPARATOR")
-target_link_libraries(partition_to_vertex_separator ${OpenMP_CXX_LIBRARIES})
-install(TARGETS partition_to_vertex_separator DESTINATION bin)
-
-add_executable(interface_test misc/example_library_call/interface_test.cpp interface/kaHIP_interface.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_include_directories(interface_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/interface)
-target_compile_definitions(interface_test PRIVATE "-DMODE_KAFFPA")
-target_link_libraries(interface_test ${OpenMP_CXX_LIBRARIES})
-install(TARGETS interface_test DESTINATION bin)
-
-add_executable(kaffpaE app/kaffpaE.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping> $<TARGET_OBJECTS:libkaffpa_parallel>)
-target_compile_definitions(kaffpaE PRIVATE "-DMODE_KAFFPAE")
-target_include_directories(kaffpaE PUBLIC ${MPI_CXX_INCLUDE_PATH})
-target_link_libraries(kaffpaE ${MPI_CXX_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
-install(TARGETS kaffpaE DESTINATION bin)
-
-add_executable(graphchecker app/graphchecker.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_compile_definitions(graphchecker PRIVATE "-DMODE_GRAPHCHECKER")
-target_link_libraries(graphchecker ${OpenMP_CXX_LIBRARIES})
-install(TARGETS graphchecker DESTINATION bin)
-
-add_executable(edge_partitioning app/spac.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping> $<TARGET_OBJECTS:libspac>)
-target_compile_definitions(edge_partitioning PRIVATE "-DMODE_KAFFPA")
-target_link_libraries(edge_partitioning ${OpenMP_CXX_LIBRARIES})
-install(TARGETS edge_partitioning DESTINATION bin)
-
+#add_executable(kaffpa app/kaffpa.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_compile_definitions(kaffpa PRIVATE "-DMODE_KAFFPA")
+#target_link_libraries(kaffpa ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS kaffpa DESTINATION bin)
+#
+#add_executable(evaluator app/evaluator.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_compile_definitions(evaluator PRIVATE "-DMODE_EVALUATOR")
+#target_link_libraries(evaluator ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS evaluator DESTINATION bin)
+#
+#add_executable(node_separator app/node_separator_ml.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_compile_definitions(node_separator PRIVATE "-DMODE_NODESEP")
+#target_link_libraries(node_separator ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS node_separator DESTINATION bin)
+#
+#add_executable(label_propagation app/label_propagation.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_compile_definitions(label_propagation PRIVATE "-DMODE_LABELPROPAGATION")
+#target_link_libraries(label_propagation ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS label_propagation DESTINATION bin)
+#
+#add_executable(partition_to_vertex_separator app/partition_to_vertex_separator.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_compile_definitions(partition_to_vertex_separator PRIVATE "-DMODE_PARTITIONTOVERTEXSEPARATOR")
+#target_link_libraries(partition_to_vertex_separator ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS partition_to_vertex_separator DESTINATION bin)
+#
+#add_executable(interface_test misc/example_library_call/interface_test.cpp interface/kaHIP_interface.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_include_directories(interface_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/interface)
+#target_compile_definitions(interface_test PRIVATE "-DMODE_KAFFPA")
+#target_link_libraries(interface_test ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS interface_test DESTINATION bin)
+#
+#add_executable(kaffpaE app/kaffpaE.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping> $<TARGET_OBJECTS:libkaffpa_parallel>)
+#target_compile_definitions(kaffpaE PRIVATE "-DMODE_KAFFPAE")
+#target_include_directories(kaffpaE PUBLIC ${MPI_CXX_INCLUDE_PATH})
+#target_link_libraries(kaffpaE ${MPI_CXX_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS kaffpaE DESTINATION bin)
+#
+#add_executable(graphchecker app/graphchecker.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_compile_definitions(graphchecker PRIVATE "-DMODE_GRAPHCHECKER")
+#target_link_libraries(graphchecker ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS graphchecker DESTINATION bin)
+#
+#add_executable(edge_partitioning app/spac.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping> $<TARGET_OBJECTS:libspac>)
+#target_compile_definitions(edge_partitioning PRIVATE "-DMODE_KAFFPA")
+#target_link_libraries(edge_partitioning ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS edge_partitioning DESTINATION bin)
+#
 # Shared interface library
-add_library(interface SHARED interface/kaHIP_interface.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_include_directories(interface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/interface)
-target_compile_definitions(interface PRIVATE "-DMODE_KAFFPA")
-target_link_libraries(interface PUBLIC ${OpenMP_CXX_LIBRARIES})
-install(TARGETS interface DESTINATION lib)
-
+#add_library(interface SHARED interface/kaHIP_interface.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_include_directories(interface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/interface)
+#target_compile_definitions(interface PRIVATE "-DMODE_KAFFPA")
+#target_link_libraries(interface PUBLIC ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS interface DESTINATION lib)
+#
 # Static interface library
-add_library(interface_static interface/kaHIP_interface.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
-target_include_directories(interface_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/interface)
-target_compile_definitions(interface_static PRIVATE "-DMODE_KAFFPA")
-target_link_libraries(interface_static PUBLIC ${OpenMP_CXX_LIBRARIES})
-install(TARGETS interface_static DESTINATION lib)
+#add_library(interface_static interface/kaHIP_interface.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
+#target_include_directories(interface_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/interface)
+#target_compile_definitions(interface_static PRIVATE "-DMODE_KAFFPA")
+#target_link_libraries(interface_static PUBLIC ${OpenMP_CXX_LIBRARIES})
+#install(TARGETS interface_static DESTINATION lib)
+
+add_executable(cluster_coarsening app/cluster_coarsening.cpp)
+target_compile_definitions(cluster_coarsening PRIVATE "-DMODE_KAFFPA -DMODE_CLUSTER_COARSENING")
+target_link_libraries(cluster_coarsening libkaffpa libmapping libcluster_coarsening vieclus OpenMP::OpenMP_CXX MPI::MPI_CXX)
 
 # ParHIP
-if(PARHIP)
-  add_subdirectory(parallel/modified_kahip)
-  add_subdirectory(parallel/parallel_src)
-endif()
+#if(PARHIP)
+#  add_subdirectory(parallel/modified_kahip)
+#  add_subdirectory(parallel/parallel_src)
+#endif()
