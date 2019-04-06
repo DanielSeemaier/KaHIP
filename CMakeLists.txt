@@ -174,10 +174,9 @@ add_library(libmapping OBJECT ${LIBMAPPING_SOURCE_FILES})
 set(LIBSPAC_SOURCE_FILES OBJECT lib/spac/spac.cpp)
 add_library(libspac ${LIBSPAC_SOURCE_FILES})
 
-set(LIBCLUSTER_COARSENING_FILES
-        lib/bcc/VieClusAdapter.cpp
+set(LIBCLUSTER_COARSENING_FILES lib/bcc/VieClusAdapter.cpp
   lib/bcc/ExternalPartitionMap.cpp lib/bcc/ModularityMetric.cpp lib/bcc/ModularityMetric.h lib/bcc/MappingVerifier.cpp lib/bcc/MappingVerifier.h)
-add_library(libcluster_coarsening ${LIBCLUSTER_COARSENING_FILES})
+add_library(libcluster_coarsening OBJECT ${LIBCLUSTER_COARSENING_FILES})
 
 # generate targets for each binary
 #add_executable(kaffpa app/kaffpa.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping>)
@@ -241,9 +240,9 @@ add_library(libcluster_coarsening ${LIBCLUSTER_COARSENING_FILES})
 #target_link_libraries(interface_static PUBLIC ${OpenMP_CXX_LIBRARIES})
 #install(TARGETS interface_static DESTINATION lib)
 
-add_executable(cluster_coarsening app/cluster_coarsening.cpp)
+add_executable(cluster_coarsening app/cluster_coarsening.cpp $<TARGET_OBJECTS:libkaffpa> $<TARGET_OBJECTS:libmapping> $<TARGET_OBJECTS:libcluster_coarsening>)
 target_compile_definitions(cluster_coarsening PRIVATE "-DMODE_KAFFPA -DMODE_CLUSTER_COARSENING")
-target_link_libraries(cluster_coarsening libkaffpa libmapping libcluster_coarsening vieclus OpenMP::OpenMP_CXX MPI::MPI_CXX)
+target_link_libraries(cluster_coarsening vieclus OpenMP::OpenMP_CXX MPI::MPI_CXX)
 
 # ParHIP
 #if(PARHIP)
