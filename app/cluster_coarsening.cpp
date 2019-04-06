@@ -1,11 +1,3 @@
-/******************************************************************************
- * cluster_coarsening.cpp
- * *
- * Source of KaHIP -- Karlsruhe High Quality Partitioning.
- * Christian Schulz <christian.schulz.phone@gmail.com>
- *****************************************************************************/
-
-#include <argtable3.h>
 #include <iostream>
 #include <math.h>
 #include <regex.h>
@@ -18,196 +10,235 @@
 
 #include "balance_configuration.h"
 #include "data_structure/graph_access.h"
-#include "data_structure/matrix/normal_matrix.h"
-#include "data_structure/matrix/online_distance_matrix.h"
 #include "graph_io.h"
-#include "macros_assertions.h"
-#include "mapping/mapping_algorithms.h"
-#include "parse_parameters.h"
 #include "partition/graph_partitioner.h"
 #include "partition/partition_config.h"
-#include "partition/uncoarsening/refinement/cycle_improvements/cycle_refinement.h"
 #include "quality_metrics.h"
 #include "random_functions.h"
 #include "timer.h"
 
-#include "bcc/clustering.h"
+#include "bcc/VieClusAdapter.h"
+#include "configuration.h"
 
-int main(int argn, char **argv) {
-#ifndef MODE_CLUSTER_COARSENING
-        std::cerr << "built " __FILE__ << " without MODE_CLUSTER_COARSENING; fix your build script" << std::endl;
-        std::exit(1);
-#endif
+#include <getopt.h>
 
-		VieClus::setup(&argn, &argv);
+using namespace std::string_literals;
 
-        PartitionConfig partition_config;
-        std::string graph_filename;
+static struct option options[] = {
+        {"help", no_argument, nullptr, 'h'},
+        {"preconfiguration", required_argument, nullptr, 'P'},
+        {"k", required_argument, nullptr, 'k'},
+        {"graph", required_argument, nullptr, 'G'},
+        {"seed", required_argument, nullptr, 'S'},
+        {"verify", no_argument, nullptr, 'v'},
+        {"time-limit", required_argument, nullptr, 'L'},
+        {"clustering-mode", required_argument, nullptr, 'm'},
+        {"vieclus-mode", required_argument, nullptr, 'M'},
+        {"combine-mode", required_argument, nullptr, 'c'},
+        {nullptr, 0, nullptr, 0}
+};
 
-        bool is_graph_weighted = false;
-        bool suppress_output   = false;
-        bool recursive         = false;
+class MissingArgumentException : public std::exception {
+    std::string _what_message;
 
-        int ret_code = parse_parameters(argn, argv, 
-                        partition_config, 
-                        graph_filename, 
-                        is_graph_weighted, 
-                        suppress_output, recursive); 
+public:
+    explicit MissingArgumentException(const char *argument_name)
+            : _what_message("[BCC] Missing argument: "s + argument_name) {
+    }
 
-        if(ret_code) {
-                return 0;
+    const char *what() const noexcept override {
+        return _what_message.c_str();
+    }
+};
+
+static void _print_help() {
+    std::cout << "Mandatory arguments:\n"
+              << "\t--preconfiguration=[fast, fastsocial, eco, ecosocial, strong, strongsocial]\n"
+              << "\t--k=integer\n"
+              << "\t--graph=filename\n"
+              << "\nOptional arguments:\n"
+              << "\t--seed=integer\n"
+              << "\t--verify (enable some time consuming checks)\n"
+              << "\t--time-limit=integer (time limit for VieClus evolutionary algorithm)\n"
+              << "\t--clustering-mode=[no_clustering, toplevel, multilevel]\n"
+              << "\t--vieclus-mode=[default, shallow, shallownolp]\n"
+              << "\t--combine-mode=[second, first]\n"
+              << std::endl;
+}
+
+static PartitionConfig _parse_arguments(int argc, char **argv) {
+    std::string preconfiguration_name;
+    int k = 0;
+    std::string graph_filename;
+    int seed = 0;
+    bool verify = false;
+    int time_limit = 0;
+    std::string clustering_mode_name;
+    std::string vieclus_mode_name;
+    std::string combine_mode_name;
+
+    while (true) {
+        int index;
+        int c = getopt_long_only(argc, argv, "hP:k:G:S:vL:m:M:c:", options, &index);
+        if (c == -1) break;
+
+        switch (c) {
+            case 0:
+                break;
+
+            case 'h': // --help
+                _print_help();
+                exit(EXIT_SUCCESS);
+                break;
+
+            case 'P': // --preconfiguration
+                preconfiguration_name = optarg;
+                break;
+
+            case 'k': // --k
+                k = std::stoi(optarg);
+                break;
+
+            case 'G': // --graph
+                graph_filename = optarg;
+                break;
+
+            case 'S': // --seed
+                seed = std::stoi(optarg);
+                break;
+
+            case 'v': // --verify
+                verify = true;
+                break;
+
+            case 'L': // --time-limit
+                time_limit = std::stoi(optarg);
+                break;
+
+            case 'm': // --clustering-mode
+                clustering_mode_name = optarg;
+                break;
+
+            case 'M': // --vieclus-mode
+                vieclus_mode_name = optarg;
+                break;
+
+            case 'c': // --combine-mode
+                combine_mode_name = optarg;
+                break;
+
+            case '?':
+                // getopt_long_only() already printed an error message
+                exit(EXIT_FAILURE);
+
+            default:
+                std::cerr << "[BCC] Missing option argument for " << (char) index << std::endl;
+                exit(EXIT_FAILURE);
         }
+    }
 
-        std::streambuf* backup = std::cout.rdbuf();
-        std::ofstream ofs;
-        ofs.open("/dev/null");
-        if(suppress_output) {
-                std::cout.rdbuf(ofs.rdbuf()); 
-        }
+    PartitionConfig partition_config;
 
-        partition_config.LogDump(stdout);
-        graph_access G;     
+    if (!preconfiguration_name.empty()) {
+        configuration preconfigurations;
+        preconfigurations.standard(partition_config);
 
-        timer t;
-        graph_io::readGraphWeighted(G, graph_filename);
-        std::cout << "io time: " << t.elapsed()  << std::endl;
+        if (preconfiguration_name == "fast") preconfigurations.fast(partition_config);
+        else if (preconfiguration_name == "fastsocial") preconfigurations.fastsocial(partition_config);
+        else if (preconfiguration_name == "eco") preconfigurations.eco(partition_config);
+        else if (preconfiguration_name == "ecosocial") preconfigurations.ecosocial(partition_config);
+        else if (preconfiguration_name == "strong") preconfigurations.strong(partition_config);
+        else if (preconfiguration_name == "strongsocial") preconfigurations.strongsocial(partition_config);
+        else throw std::runtime_error("Invalid value for --preconfiguration: "s + preconfiguration_name);
+    } else {
+        throw MissingArgumentException("--preconfiguration");
+    }
 
-        G.set_partition_count(partition_config.k); 
+    if (!graph_filename.empty()) {
+        partition_config.graph_filename = graph_filename;
+    } else {
+        throw MissingArgumentException("--graph");
+    }
 
-        balance_configuration bc;
-        bc.configurate_balance( partition_config, G);
+    if (k > 0) {
+        partition_config.k = k;
+    } else {
+        throw MissingArgumentException("--k");
+    }
 
-        srand(partition_config.seed);
-        random_functions::setSeed(partition_config.seed);
+    if (!clustering_mode_name.empty()) {
+        if (clustering_mode_name == "no_clustering") partition_config.bcc_mode = BCC_NO_CLUSTERING;
+        else if (clustering_mode_name == "toplevel") partition_config.bcc_mode = BCC_TOPLEVEL;
+        else if (clustering_mode_name == "multilevel") partition_config.bcc_mode = BCC_MULTILEVEL;
+        else throw std::runtime_error("Invalid value for --clustering-mode: "s + clustering_mode_name);
+    }
 
-        std::cout << "[MODE_CLUSTER_COARSENING] no_nodes: " << G.number_of_nodes() << std::endl;
-        std::cout << "[MODE_CLUSTER_COARSENING] no_edges: " << G.number_of_edges() << std::endl;
-        std::cout << "[MODE_CLUSTER_COARSENING] no_blocks: " << partition_config.k << std::endl;
+    if (!vieclus_mode_name.empty()) {
+        if (vieclus_mode_name == "default") partition_config.bcc_vieclus_mode = VIECLUS_NORMAL;
+        else if (vieclus_mode_name == "shallow") partition_config.bcc_vieclus_mode = VIECLUS_SHALLOW;
+        else if (vieclus_mode_name == "shallownolp") partition_config.bcc_vieclus_mode = VIECLUS_SHALLOW_NO_LP;
+        else throw std::runtime_error("Invalid value for --vieclus-mode: "s + vieclus_mode_name);
+    }
 
-        if (partition_config.bcc_enable && !partition_config.bcc_full_cluster_contraction) {
-                BCC::compute_and_set_clustering(G, partition_config);
-        } else if (partition_config.bcc_enable && partition_config.bcc_full_cluster_contraction) {
-        		std::cout << "[MODE_CLUSTER_COARSENING] will not call VieClus at this point because bcc_full_cluster_contraction is enabled" << std::endl;
-        }
+    if (!combine_mode_name.empty()) {
+        if (combine_mode_name == "first") partition_config.bcc_combine_mode = BCC_FIRST_PARTITION_INDEX;
+        else if (combine_mode_name == "second") partition_config.bcc_combine_mode = BCC_SECOND_PARTITION_INDEX;
+        else throw std::runtime_error("Invalid value for --combine-mode: "s + combine_mode_name);
+    }
 
-        // ***************************** perform partitioning ***************************************       
-        t.restart();
-        graph_partitioner partitioner;
-        quality_metrics qm;
+    partition_config.seed = seed;
+    partition_config.bcc_time_limit = time_limit;
+    partition_config.bcc_verify = verify;
+    partition_config.LogDump(stdout);
 
-        std::cout <<  "performing partitioning!"  << std::endl;
-        if(partition_config.time_limit == 0) {
-                partitioner.perform_partitioning(partition_config, G);
-        } else {
-                PartitionID* map = new PartitionID[G.number_of_nodes()];
-                EdgeWeight best_cut = std::numeric_limits<EdgeWeight>::max();
-                while(t.elapsed() < partition_config.time_limit) {
-                        partition_config.graph_allready_partitioned = false;
-                        partitioner.perform_partitioning(partition_config, G);
-                        EdgeWeight cut = qm.edge_cut(G);
-                        if(cut < best_cut) {
-                                best_cut = cut;
-                                forall_nodes(G, node) {
-                                        map[node] = G.getPartitionIndex(node);
-                                } endfor
-                        }
-                }
+    return partition_config;
+}
 
-                forall_nodes(G, node) {
-                        G.setPartitionIndex(node, map[node]);
-                } endfor
-        }
+int main(int argc, char **argv) {
+    VieClus::setup(&argc, &argv);
+    PartitionConfig partition_config = _parse_arguments(argc, argv);
+    std::cout << "[BCC] partition_configuration(initial)=" << partition_config << std::endl;
 
-        if( partition_config.kaffpa_perfectly_balance ) {
-                double epsilon                         = partition_config.imbalance/100.0;
-                partition_config.upper_bound_partition = (1+epsilon)*ceil(partition_config.largest_graph_weight/(double)partition_config.k);
+    timer t;
 
-                complete_boundary boundary(&G);
-                boundary.build();
+    // load graph G
+    graph_access G;
+    graph_io::readGraphWeighted(G, partition_config.graph_filename);
+    std::cout << "[BCC] io_time=" << t.elapsed() << std::endl;
+    G.set_partition_count(partition_config.k);
+    std::cout << "[BCC] n(G)=" << G.number_of_nodes()
+              << "; m(G)=" << G.number_of_edges()
+              << "; k(G)=" << G.get_partition_count() << std::endl;
 
-                cycle_refinement cr;
-                cr.perform_refinement(partition_config, G, boundary);
-        }
-        ofs.close();
-        std::cout.rdbuf(backup);
-        std::cout <<  "time spent for partitioning " << t.elapsed()  << std::endl;
+    // configuration
+    balance_configuration bc;
+    bc.configurate_balance(partition_config, G);
+    std::cout << "[BCC] partition_configuration(balanced)=" << partition_config << std::endl;
 
-        int qap = 0;
-        if(partition_config.enable_mapping) {
-                std::cout <<  "performing mapping!"  << std::endl;
-                //check if k is a power of 2 
-                bool power_of_two = (partition_config.k & (partition_config.k-1)) == 0;
-                std::vector< NodeID > perm_rank(partition_config.k);
-                graph_access C;
-                complete_boundary boundary(&G);
-                boundary.build();
-                boundary.getUnderlyingQuotientGraph(C);
+    srand(partition_config.seed);
+    random_functions::setSeed(partition_config.seed);
 
-                forall_nodes(C, node) {
-                        C.setNodeWeight(node, 1);
-                } endfor
+    if (partition_config.bcc_mode == BCC_TOPLEVEL) {
+        BCC::compute_and_set_clustering(G, partition_config);
+    }
 
-                if(!power_of_two ) {
-                        t.restart();
-                        mapping_algorithms ma;
-                        if( partition_config.distance_construction_algorithm != DIST_CONST_HIERARCHY_ONLINE) {
-                                normal_matrix D(partition_config.k, partition_config.k);
-                                ma.construct_a_mapping(partition_config, C, D, perm_rank);
-                                std::cout <<  "time spent for mapping " << t.elapsed()  << std::endl;
-                                qap = qm.total_qap(C, D, perm_rank );
-                        } else {
-                                online_distance_matrix D(partition_config.k, partition_config.k);
-                                D.setPartitionConfig(partition_config);
-                                ma.construct_a_mapping(partition_config, C, D, perm_rank);
-                                std::cout <<  "time spent for mapping " << t.elapsed()  << std::endl;
-                                qap = qm.total_qap(C, D, perm_rank );
-                        }
-                } else {
-                        std::cout <<  "number of processors is a power of two, so no mapping algorithm is performed (identity is best)"  << std::endl;
-                        std::cout <<  "time spent for mapping " << 0 << std::endl;
-                        for( unsigned i = 0; i < perm_rank.size(); i++) {
-                                perm_rank[i] = i;
-                        }
+    // perform partitioning
+    t.restart();
+    graph_partitioner().perform_partitioning(partition_config, G);
+    std::cout << "[BCC] partitioner_time=" << t.elapsed() << std::endl;
 
-                        online_distance_matrix D(partition_config.k, partition_config.k);
-                        D.setPartitionConfig(partition_config);
-                        qap = qm.total_qap(C, D, perm_rank );
-                }
+    // print some statistics
+    quality_metrics qm;
+    std::cout << "[BCC] cut(final)=" << qm.edge_cut(G) << std::endl;
+    std::cout << "[BCC] boundary_nodes(final)=" << qm.boundary_nodes(G) << std::endl;
+    std::cout << "[BCC] balance(final)=" << qm.balance(G) << std::endl;
+    std::cout << "[BCC] max_comm_vol(final)=" << qm.max_communication_volume(G) << std::endl;
 
-                // solution check 
-                std::vector< NodeID > tbsorted = perm_rank;
-                std::sort( tbsorted.begin(), tbsorted.end() );
-                for( unsigned int i = 0; i < tbsorted.size(); i++) {
-                        if( tbsorted[i] != i ) {
-                                std::cout <<  "solution is NOT a permutation. Please report this."  << std::endl;
-                                std::cout <<  tbsorted[i] <<  " " << i   << std::endl;
-                                exit(0);
-                        }
-                }
+    // write the partition to the disc
+    if (!partition_config.filename_output.empty()) {
+        graph_io::writePartition(G, partition_config.filename_output);
+    }
 
-                forall_nodes(G, node) {
-                        G.setPartitionIndex(node, perm_rank[G.getPartitionIndex(node)]);
-                } endfor
-        }
-        // ******************************* done partitioning *****************************************       
-        // output some information about the partition that we have computed 
-        std::cout << "cut \t\t"         << qm.edge_cut(G)                 << std::endl;
-        std::cout << "finalobjective  " << qm.edge_cut(G)                 << std::endl;
-        std::cout << "bnd \t\t"         << qm.boundary_nodes(G)           << std::endl;
-        std::cout << "balance \t"       << qm.balance(G)                  << std::endl;
-        std::cout << "max_comm_vol \t"  << qm.max_communication_volume(G) << std::endl;
-        if(partition_config.enable_mapping) std::cout <<  "quadratic assignment objective J(C,D,Pi') = " << qap << std::endl;
-
-        // write the partition to the disc 
-        std::stringstream filename;
-        if(!partition_config.filename_output.compare("")) {
-                filename << "tmppartition" << partition_config.k;
-        } else {
-                filename << partition_config.filename_output;
-        }
-
-        graph_io::writePartition(G, filename.str());
-
-        VieClus::teardown();
-
+    VieClus::teardown();
+    return 0;
 }

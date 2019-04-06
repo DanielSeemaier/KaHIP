@@ -520,7 +520,6 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.distances.push_back(10);
         partition_config.distances.push_back(100);
 
-#ifdef MODE_CLUSTER_COARSENING
         partition_config.bcc_enable = false;
         partition_config.bcc_default_clustering = false;
         partition_config.bcc_shallow_clustering = false;
@@ -528,8 +527,10 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.bcc_full_cluster_contraction = false;
         partition_config.bcc_time_limit = 0;
         partition_config.bcc_combine = 2;
-#endif
-
+        partition_config.bcc_verify = false;
+        partition_config.bcc_mode = BCC_NO_CLUSTERING;
+        partition_config.bcc_vieclus_mode = VIECLUS_NORMAL;
+        partition_config.bcc_combine_mode = BCC_SECOND_PARTITION_INDEX;
 }
 
 inline void configuration::standardsnw( PartitionConfig & partition_config ) {

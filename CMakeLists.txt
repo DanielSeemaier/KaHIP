@@ -175,8 +175,8 @@ set(LIBSPAC_SOURCE_FILES OBJECT lib/spac/spac.cpp)
 add_library(libspac ${LIBSPAC_SOURCE_FILES})
 
 set(LIBCLUSTER_COARSENING_FILES
-  lib/bcc/clustering.cpp
-  lib/bcc/ExternalPartitionMap.cpp)
+        lib/bcc/VieClusAdapter.cpp
+  lib/bcc/ExternalPartitionMap.cpp lib/bcc/ModularityMetric.cpp lib/bcc/ModularityMetric.h lib/bcc/MappingVerifier.cpp lib/bcc/MappingVerifier.h)
 add_library(libcluster_coarsening ${LIBCLUSTER_COARSENING_FILES})
 
 # generate targets for each binary

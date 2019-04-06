@@ -24,298 +24,324 @@ graph_partitioner::~graph_partitioner() {
 
 }
 
-void graph_partitioner::perform_recursive_partitioning(PartitionConfig & config, graph_access & G) {
-        m_global_k = config.k;
-        m_global_upper_bound = config.upper_bound_partition;
-        m_rnd_bal = random_functions::nextDouble(1,2);
-        perform_recursive_partitioning_internal(config, G, 0, config.k-1);
+void graph_partitioner::perform_recursive_partitioning(PartitionConfig &config, graph_access &G) {
+    m_global_k = config.k;
+    m_global_upper_bound = config.upper_bound_partition;
+    m_rnd_bal = random_functions::nextDouble(1, 2);
+    perform_recursive_partitioning_internal(config, G, 0, config.k - 1);
 }
 
-void graph_partitioner::perform_recursive_partitioning_internal(PartitionConfig & config, 
-                                                                graph_access & G, 
-                                                                PartitionID lb, 
+void graph_partitioner::perform_recursive_partitioning_internal(PartitionConfig &config,
+                                                                graph_access &G,
+                                                                PartitionID lb,
                                                                 PartitionID ub) {
 
-        G.set_partition_count(2);
-        
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // configuration of bipartitioning
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        PartitionConfig bipart_config      = config;
-        bipart_config.k                    = 2;
-        bipart_config.stop_rule            = STOP_RULE_MULTIPLE_K;
-        bipart_config.num_vert_stop_factor = 100;
-        double epsilon                     = 0;
-        bipart_config.rebalance            = false;
-        bipart_config.softrebalance        = true;
+    G.set_partition_count(2);
 
-        if(config.k < 64) {
-                epsilon                     = m_rnd_bal/100.0;
-                bipart_config.rebalance     = false;
-                bipart_config.softrebalance = false;
-        } else {
-                epsilon                     = 1/100.0;
-        }
-        if(m_global_k == 2) {
-                epsilon = 3.0/100.0;
-        }
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    // configuration of bipartitioning
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    PartitionConfig bipart_config = config;
+    bipart_config.k = 2;
+    bipart_config.stop_rule = STOP_RULE_MULTIPLE_K;
+    bipart_config.num_vert_stop_factor = 100;
+    double epsilon = 0;
+    bipart_config.rebalance = false;
+    bipart_config.softrebalance = true;
 
-        
-        bipart_config.upper_bound_partition              = ceil((1+epsilon)*config.work_load/(double)bipart_config.k);
-        bipart_config.corner_refinement_enabled          = false;
-        bipart_config.quotient_graph_refinement_disabled = false;
-        bipart_config.refinement_scheduling_algorithm    = REFINEMENT_SCHEDULING_ACTIVE_BLOCKS;
-        bipart_config.kway_adaptive_limits_beta          = log(G.number_of_nodes());
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // end configuration
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if (config.k < 64) {
+        epsilon = m_rnd_bal / 100.0;
+        bipart_config.rebalance = false;
+        bipart_config.softrebalance = false;
+    } else {
+        epsilon = 1 / 100.0;
+    }
+    if (m_global_k == 2) {
+        epsilon = 3.0 / 100.0;
+    }
 
-        NodeID new_ub_lhs     = floor((lb+ub)/2);
-        NodeID new_lb_rhs     = floor((lb+ub)/2+1);
-        NodeID num_blocks_lhs = new_ub_lhs - lb + 1;
-        NodeID num_blocks_rhs = ub - new_lb_rhs + 1;
 
-        if(config.k % 2 != 0) {
-                //otherwise the block weights have to be 
-                bipart_config.target_weights.clear();
-                bipart_config.target_weights.push_back((1+epsilon)*num_blocks_lhs/(double)(num_blocks_lhs+num_blocks_rhs)*config.work_load);
-                bipart_config.target_weights.push_back((1+epsilon)*num_blocks_rhs/(double)(num_blocks_lhs+num_blocks_rhs)*config.work_load);
-                bipart_config.initial_bipartitioning  = true;
-                bipart_config.refinement_type         = REFINEMENT_TYPE_FM; // flows not supported for odd block weights
-        } else {
+    bipart_config.upper_bound_partition = ceil((1 + epsilon) * config.work_load / (double) bipart_config.k);
+    bipart_config.corner_refinement_enabled = false;
+    bipart_config.quotient_graph_refinement_disabled = false;
+    bipart_config.refinement_scheduling_algorithm = REFINEMENT_SCHEDULING_ACTIVE_BLOCKS;
+    bipart_config.kway_adaptive_limits_beta = log(G.number_of_nodes());
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    // end configuration
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-                bipart_config.target_weights.clear();
-                bipart_config.target_weights.push_back(bipart_config.upper_bound_partition);
-                bipart_config.target_weights.push_back(bipart_config.upper_bound_partition);
-                bipart_config.initial_bipartitioning  = false;
-        }
+    NodeID new_ub_lhs = floor((lb + ub) / 2);
+    NodeID new_lb_rhs = floor((lb + ub) / 2 + 1);
+    NodeID num_blocks_lhs = new_ub_lhs - lb + 1;
+    NodeID num_blocks_rhs = ub - new_lb_rhs + 1;
 
-        bipart_config.grow_target = ceil(num_blocks_lhs/(double)(num_blocks_lhs+num_blocks_rhs)*config.work_load);
+    if (config.k % 2 != 0) {
+        //otherwise the block weights have to be
+        bipart_config.target_weights.clear();
+        bipart_config.target_weights.push_back(
+                (1 + epsilon) * num_blocks_lhs / (double) (num_blocks_lhs + num_blocks_rhs) * config.work_load);
+        bipart_config.target_weights.push_back(
+                (1 + epsilon) * num_blocks_rhs / (double) (num_blocks_lhs + num_blocks_rhs) * config.work_load);
+        bipart_config.initial_bipartitioning = true;
+        bipart_config.refinement_type = REFINEMENT_TYPE_FM; // flows not supported for odd block weights
+    } else {
 
-        perform_partitioning(bipart_config, G);        
+        bipart_config.target_weights.clear();
+        bipart_config.target_weights.push_back(bipart_config.upper_bound_partition);
+        bipart_config.target_weights.push_back(bipart_config.upper_bound_partition);
+        bipart_config.initial_bipartitioning = false;
+    }
 
-        if( config.k > 2 ) {
-               graph_extractor extractor;
- 
-               graph_access extracted_block_lhs;
-               graph_access extracted_block_rhs;
-               std::vector<NodeID> mapping_extracted_to_G_lhs; // map the new nodes to the nodes in the old graph G
-               std::vector<NodeID> mapping_extracted_to_G_rhs; // map the new nodes to the nodes in the old graph G
+    bipart_config.grow_target = ceil(num_blocks_lhs / (double) (num_blocks_lhs + num_blocks_rhs) * config.work_load);
 
-               NodeWeight weight_lhs_block = 0;
-               NodeWeight weight_rhs_block = 0;
+    perform_partitioning(bipart_config, G);
 
-               extractor.extract_two_blocks(G, extracted_block_lhs, 
-                                               extracted_block_rhs, 
-                                               mapping_extracted_to_G_lhs, 
-                                               mapping_extracted_to_G_rhs, 
-                                               weight_lhs_block, weight_rhs_block);
+    if (config.k > 2) {
+        graph_extractor extractor;
 
-               PartitionConfig rec_config = config;
-               if(num_blocks_lhs > 1) {
-                       rec_config.k = num_blocks_lhs;
+        graph_access extracted_block_lhs;
+        graph_access extracted_block_rhs;
+        std::vector<NodeID> mapping_extracted_to_G_lhs; // map the new nodes to the nodes in the old graph G
+        std::vector<NodeID> mapping_extracted_to_G_rhs; // map the new nodes to the nodes in the old graph G
 
-                       rec_config.largest_graph_weight = weight_lhs_block;
-                       rec_config.work_load            = weight_lhs_block;
-                       perform_recursive_partitioning_internal( rec_config, extracted_block_lhs, lb, new_ub_lhs);
-                       
-                       //apply partition
-                       forall_nodes(extracted_block_lhs, node) {
-                               G.setPartitionIndex(mapping_extracted_to_G_lhs[node], extracted_block_lhs.getPartitionIndex(node));
-                       } endfor
- 
-               } else {
-                       //apply partition
-                       forall_nodes(extracted_block_lhs, node) {
-                               G.setPartitionIndex(mapping_extracted_to_G_lhs[node], lb);
-                       } endfor
-               }
+        NodeWeight weight_lhs_block = 0;
+        NodeWeight weight_rhs_block = 0;
 
-               if(num_blocks_rhs > 1) {
-                       rec_config.k = num_blocks_rhs;
-                       rec_config.largest_graph_weight = weight_rhs_block;
-                       rec_config.work_load            = weight_rhs_block;
-                       perform_recursive_partitioning_internal( rec_config, extracted_block_rhs, new_lb_rhs, ub);
+        extractor.extract_two_blocks(G, extracted_block_lhs,
+                                     extracted_block_rhs,
+                                     mapping_extracted_to_G_lhs,
+                                     mapping_extracted_to_G_rhs,
+                                     weight_lhs_block, weight_rhs_block);
 
-                       forall_nodes(extracted_block_rhs, node) {
-                               G.setPartitionIndex(mapping_extracted_to_G_rhs[node], extracted_block_rhs.getPartitionIndex(node));
-                       } endfor
+        PartitionConfig rec_config = config;
+        if (num_blocks_lhs > 1) {
+            rec_config.k = num_blocks_lhs;
 
-               } else {
-                       //apply partition
-                       forall_nodes(extracted_block_rhs, node) {
-                               G.setPartitionIndex(mapping_extracted_to_G_rhs[node], ub);
-                       } endfor
-               }
+            rec_config.largest_graph_weight = weight_lhs_block;
+            rec_config.work_load = weight_lhs_block;
+            perform_recursive_partitioning_internal(rec_config, extracted_block_lhs, lb, new_ub_lhs);
+
+            //apply partition
+            forall_nodes(extracted_block_lhs, node)
+                    {
+                        G.setPartitionIndex(mapping_extracted_to_G_lhs[node],
+                                            extracted_block_lhs.getPartitionIndex(node));
+                    }
+            endfor
 
         } else {
-               forall_nodes(G, node) {
-                       if(G.getPartitionIndex(node) == 0) {
-                            G.setPartitionIndex(node, lb);
-                       } else {
-                            G.setPartitionIndex(node, ub);
-                       }
-               } endfor
+            //apply partition
+            forall_nodes(extracted_block_lhs, node)
+                    {
+                        G.setPartitionIndex(mapping_extracted_to_G_lhs[node], lb);
+                    }
+            endfor
         }
-       
-        G.set_partition_count(config.k);
+
+        if (num_blocks_rhs > 1) {
+            rec_config.k = num_blocks_rhs;
+            rec_config.largest_graph_weight = weight_rhs_block;
+            rec_config.work_load = weight_rhs_block;
+            perform_recursive_partitioning_internal(rec_config, extracted_block_rhs, new_lb_rhs, ub);
+
+            forall_nodes(extracted_block_rhs, node)
+                    {
+                        G.setPartitionIndex(mapping_extracted_to_G_rhs[node],
+                                            extracted_block_rhs.getPartitionIndex(node));
+                    }
+            endfor
+
+        } else {
+            //apply partition
+            forall_nodes(extracted_block_rhs, node)
+                    {
+                        G.setPartitionIndex(mapping_extracted_to_G_rhs[node], ub);
+                    }
+            endfor
+        }
+
+    } else {
+        forall_nodes(G, node)
+                {
+                    if (G.getPartitionIndex(node) == 0) {
+                        G.setPartitionIndex(node, lb);
+                    } else {
+                        G.setPartitionIndex(node, ub);
+                    }
+                }
+        endfor
+    }
+
+    G.set_partition_count(config.k);
 }
 
-void graph_partitioner::single_run( PartitionConfig & config, graph_access & G) {
+void graph_partitioner::single_run(PartitionConfig &config, graph_access &G) {
 
-        for( unsigned i = 1; i <= config.global_cycle_iterations; i++) {
-            if (!config.initial_partitioning) {
-                std::cout << "[MODE_CLUSTER_COARSENING] vcycle: " << i << " of: " << config.global_cycle_iterations  << std::endl;
-            }
-            PRINT(std::cout << "vcycle " << i << " of " << config.global_cycle_iterations  << std::endl;)
+    for (unsigned i = 1; i <= config.global_cycle_iterations; i++) {
+        if (!config.initial_partitioning) {
+            std::cout << "[BCC] graph_already_partitioned=" << config.graph_allready_partitioned << ";"
+                      << " current_vcycle=" << i << ";"
+                      << " number_of_vcycles=" << config.global_cycle_iterations << ";"
+                      << " use_wcycles=" << config.use_wcycles << ";"
+                      << " use_fullmultigrid=" << config.use_fullmultigrid << std::endl;
+
             if (config.graph_allready_partitioned) {
                 quality_metrics qm;
-                std::cout << "[MODE_CLUSTER_COARSENING] vcycle: " << i << " cut: " << qm.edge_cut(G) << " balance: " << qm.balance(G) << std::endl;
+                std::cout << "[BCC] cut(pre_vcycle_" << i << "): " << qm.edge_cut(G) << ";"
+                          << " balance(pre_vcycle_" << i << "): " << qm.balance(G) << std::endl;
+            }
+        }
+
+        if (config.use_wcycles || config.use_fullmultigrid) {
+            if (config.bcc_mode == BCC_MULTILEVEL
+                && !config.initial_partitioning
+                && config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
+                config.combine = true;
+            }
+            wcycle_partitioner w_partitioner;
+            w_partitioner.perform_partitioning(config, G);
+        } else {
+            coarsening coarsen;
+            initial_partitioning init_part;
+            uncoarsening uncoarsen;
+
+            graph_hierarchy hierarchy;
+
+            if (config.mode_node_separators) {
+                int rnd = random_functions::nextInt(0, 3);
+                if (rnd == 0) {
+                    config.edge_rating = SEPARATOR_MULTX;
+                } else if (rnd == 1) {
+                    config.edge_rating = WEIGHT;
+                } else if (rnd == 2) {
+                    config.edge_rating = SEPARATOR_MAX;
+                } else if (rnd == 3) {
+                    config.edge_rating = SEPARATOR_LOG;
+                }
             }
 
-            if(config.use_wcycles || config.use_fullmultigrid)  {
-								if (config.bcc_full_cluster_contraction && !config.initial_partitioning && config.bcc_combine == 2) {
-									config.combine = true;
-								}
-                                wcycle_partitioner w_partitioner;
-                                w_partitioner.perform_partitioning(config, G);
+            // coarsening
+            timer t;
+            coarsen.perform_coarsening(config, G, hierarchy);
 
-                                quality_metrics qm;
-                                std::cout << "[MODE_CLUSTER_COARSENING] vcycle: " << i << " cut: " << qm.edge_cut(G) << " balance: " << qm.balance(G) << std::endl;
-                        } else {
-                                coarsening coarsen;
-                                initial_partitioning init_part;
-                                uncoarsening uncoarsen;
+            if (!config.initial_partitioning) {
+                std::size_t size = hierarchy.size();
 
-                                graph_hierarchy hierarchy;
+                std::cout << "[BCC] time(coarsening)=" << t.elapsed() << ";"
+                          << " no_hierarchy_levels=" << size << std::endl;
 
-                                if( config.mode_node_separators ) {
-                                        int rnd = random_functions::nextInt(0,3);
-                                        if( rnd == 0 ) {
-                                                config.edge_rating = SEPARATOR_MULTX;
-                                        } else if ( rnd  == 1 ) {
-                                                config.edge_rating = WEIGHT;
-                                        } else if ( rnd  == 2 ) {
-                                                config.edge_rating = SEPARATOR_MAX;
-                                        } else if ( rnd  == 3 ) {
-                                                config.edge_rating = SEPARATOR_LOG;
-                                        } 
-                                }
+                auto base_no_nodes = static_cast<double>(G.number_of_nodes());
+                auto base_no_edges = static_cast<double>(G.number_of_edges());
+                for (std::size_t level = 0; level < size; ++level) {
+                    graph_access *tmp = hierarchy[level];
+                    NodeID no_nodes = tmp->number_of_nodes();
+                    EdgeID no_edges = tmp->number_of_edges();
+                    std::cout << "[BCC] n(level_" << level << ")=" << no_nodes << ";"
+                              << " m(level_" << level << ")=" << no_edges << ";"
+                              << " n_ratio(level_" << level << ")=" << no_nodes / base_no_nodes << ";"
+                              << " m_ratio(level_" << level << ")=" << no_edges / base_no_edges << std::endl;
+                }
 
-                                timer t;
+            }
 
-                                coarsen.perform_coarsening(config, G, hierarchy);
+            if (config.bcc_mode == BCC_MULTILEVEL
+                && !config.initial_partitioning
+                && config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
+                config.combine = true;
+            }
 
-                                if (!config.initial_partitioning) {
-                                    std::cout << "[MODE_CLUSTER_COARSENING] time_coarsening: " << t.elapsed() << std::endl;
+            // initial partitioning
+            t.restart();
+            init_part.perform_initial_partitioning(config, hierarchy);
 
-                                    std::size_t size = hierarchy.size();
-                                    std::cout << "[MODE_CLUSTER_COARSENING] no_hierarchy_levels: " << size << std::endl;
+            quality_metrics qm;
+            int initial_cut = 0;
+            int final_cut = 0;
+            if (!config.initial_partitioning) {
+                initial_cut = qm.edge_cut(*(hierarchy.get_coarsest()));
 
-                                    double base_no_nodes = static_cast<double>(G.number_of_nodes());
-                                    double base_no_edges = static_cast<double>(G.number_of_edges());
-                                    for (std::size_t i = 0; i < size; ++i) {
-                                        graph_access *tmp = hierarchy[i];
-                                        NodeID no_nodes = tmp->number_of_nodes();
-                                        EdgeID no_edges = tmp->number_of_edges();
-                                        std::cout << "[MODE_CLUSTER_COARSENING] level: " << i
-                                                << " no_nodes: " << no_nodes
-                                                << " no_edges: " << no_edges << std::endl;
-                                        std::cout << "[MODE_CLUSTER_COARSENING] level: " << i
-                                                << " nodes_ratio: " << static_cast<double>(no_nodes) / base_no_nodes
-                                                << " edges_ratio: " << static_cast<double>(no_edges) / base_no_edges
-                                                << std::endl;
-                                    }
+                std::cout << "[BCC] time(ip)=" << t.elapsed() << ";"
+                          << " cut(ip)=" << initial_cut << ";"
+                          << " balance(ip)=" << qm.balance(*(hierarchy.get_coarsest())) << std::endl;
+            }
 
-                                }
+            // uncoarsening
+            t.restart();
+            uncoarsen.perform_uncoarsening(config, hierarchy);
+            if (!config.initial_partitioning) {
+                final_cut = qm.edge_cut(G);
 
-                                if (config.bcc_full_cluster_contraction && !config.initial_partitioning && config.bcc_combine == 2) {
-                                	config.combine = true;
-                                }
-
-                                t.restart();
-                                init_part.perform_initial_partitioning(config, hierarchy);
-
-                                quality_metrics qm;
-                                int initial_cut = 0;
-                                int final_cut = 0;
-
-                                if (!config.initial_partitioning) {
-                                    initial_cut = qm.edge_cut(*(hierarchy.get_coarsest()));
-
-                                    std::cout << "[MODE_CLUSTER_COARSENING] time_initial_partitioning: " << t.elapsed() << std::endl;
-                                    std::cout << "[MODE_CLUSTER_COARSENING] initial_cut: " << initial_cut << std::endl;
-                                    std::cout << "[MODE_CLUSTER_COARSENING] initial_balance: " << qm.balance(*(hierarchy.get_coarsest())) << std::endl;
-                                }
-
-                                t.restart();
-                                uncoarsen.perform_uncoarsening(config, hierarchy);
-
-                                if (!config.initial_partitioning) {
-                                    final_cut = qm.edge_cut(G);
-
-                                    std::cout << "[MODE_CLUSTER_COARSENING] time_uncoarsening: " << t.elapsed() << std::endl;
-                                    std::cout << "[MODE_CLUSTER_COARSENING] final_cut: " << final_cut << std::endl;
-                                    std::cout << "[MODE_CLUSTER_COARSENING] final_balance: " << qm.balance(G) << std::endl;
-                                    std::cout << "[MODE_CLUSTER_COARSENING] cut_ratio: " << static_cast<double>(final_cut) /
-                                            static_cast<double>(initial_cut) << std::endl;
-                                }
-                                if( config.mode_node_separators ) {
-                                        quality_metrics qm;
-                                        std::cout <<  "vcycle result " << qm.separator_weight(G)  << std::endl;
-                                }
-                        }
-                config.graph_allready_partitioned = true;
-                config.balance_factor             = 0;
+                std::cout << "[BCC] time(uncoarsening)=" << t.elapsed() << ";"
+                          << " cut(uncoarsened)=" << final_cut << ";"
+                          << " balance(uncoarsened)=" << qm.balance(G) << ";"
+                          << " cut_ratio=" << static_cast<double>(final_cut) / static_cast<double>(initial_cut)
+                          << std::endl;
+            }
         }
+
+        if (!config.initial_partitioning) {
+            quality_metrics qm;
+            std::cout << "[BCC] cut(post_vcycle_" << i << ")=" << qm.edge_cut(G) << ";"
+                      << " balance(post_vcycle_" << i << ")=" << qm.balance(G) << std::endl;
+        }
+
+        config.graph_allready_partitioned = true;
+        config.balance_factor = 0;
+    }
 }
 
-void graph_partitioner::perform_partitioning( PartitionConfig & config, graph_access & G) {
-        if(config.only_first_level) {
-                if( !config.graph_allready_partitioned) {
-                        initial_partitioning init_part;
-                        init_part.perform_initial_partitioning(config, G);
-                }
-                
-                if( !config.mh_no_mh ) {
-                        complete_boundary boundary(&G);
-                        boundary.build();
-                        refinement* refine      = new mixed_refinement();
-                        refine->perform_refinement(config, G, boundary);
-                        delete refine;
-                }
-
-                return;
+void graph_partitioner::perform_partitioning(PartitionConfig &config, graph_access &G) {
+    if (config.only_first_level) {
+        if (!config.graph_allready_partitioned) {
+            initial_partitioning init_part;
+            init_part.perform_initial_partitioning(config, G);
         }
 
-        if( config.repetitions == 1 ) {
-                single_run(config,G);
-        } else {
-                quality_metrics qm;
-                // currently only for ecosocial
-                EdgeWeight best_cut = std::numeric_limits< EdgeWeight >::max();
-                std::vector< PartitionID > best_map = std::vector< PartitionID >(G.number_of_nodes());
-                for( int i = 0; i < config.repetitions; i++) {
-                        forall_nodes(G, node) {
-                                G.setPartitionIndex(node,0);
-                        } endfor
-                        PartitionConfig working_config = config;
-                        single_run(working_config, G);
+        if (!config.mh_no_mh) {
+            complete_boundary boundary(&G);
+            boundary.build();
+            refinement *refine = new mixed_refinement();
+            refine->perform_refinement(config, G, boundary);
+            delete refine;
+        }
 
-                        EdgeWeight cur_cut = qm.edge_cut(G);
-                        if( cur_cut < best_cut ) {
-                                forall_nodes(G, node) {
-                                        best_map[node] = G.getPartitionIndex(node);
-                                } endfor
+        return;
+    }
 
-                                best_cut = cur_cut;
+    if (config.repetitions == 1) {
+        single_run(config, G);
+    } else {
+        quality_metrics qm;
+        // currently only for ecosocial
+        EdgeWeight best_cut = std::numeric_limits<EdgeWeight>::max();
+        std::vector<PartitionID> best_map = std::vector<PartitionID>(G.number_of_nodes());
+        for (int i = 0; i < config.repetitions; i++) {
+            forall_nodes(G, node)
+                    {
+                        G.setPartitionIndex(node, 0);
+                    }
+            endfor
+            PartitionConfig working_config = config;
+            single_run(working_config, G);
+
+            EdgeWeight cur_cut = qm.edge_cut(G);
+            if (cur_cut < best_cut) {
+                forall_nodes(G, node)
+                        {
+                            best_map[node] = G.getPartitionIndex(node);
                         }
-                }
+                endfor
 
-                forall_nodes(G, node) {
-                        G.setPartitionIndex(node, best_map[node]);
-                } endfor
-
+                best_cut = cur_cut;
+            }
         }
+
+        forall_nodes(G, node)
+                {
+                    G.setPartitionIndex(node, best_map[node]);
+                }
+        endfor
+
+    }
 }
 

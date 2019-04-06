@@ -22,7 +22,7 @@
 #include "uncoarsening/refinement/refinement.h"
 #include "wcycle_partitioner.h"
 #include "tools/quality_metrics.h"
-#include "bcc/clustering.h"
+#include "bcc/VieClusAdapter.h"
 
 int wcycle_partitioner::perform_partitioning(const PartitionConfig & config, graph_access & G) {
         PartitionConfig  cfg = config; 

@@ -5,18 +5,20 @@
 #include <data_structure/graph_access.h>
 
 namespace BCC {
+    class ExternalPartitionMap {
+    public:
+        ExternalPartitionMap() = default;
 
-class ExternalPartitionMap {
-public:
-	void set(graph_access &G);
+        explicit ExternalPartitionMap(graph_access &G);
 
-	void apply(graph_access &G);
+        void set(graph_access &G);
 
-private:
-	std::vector<PartitionID> m_partitionMap;
-	PartitionID m_k;
-};
+        void apply(graph_access &G);
 
+    private:
+        std::vector<PartitionID> m_partitionMap{};
+        PartitionID m_k{0};
+    };
 }
 
 #endif // KAHIP_EXTERNALPARTITIONMAP_H

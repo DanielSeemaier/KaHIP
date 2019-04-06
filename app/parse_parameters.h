@@ -159,16 +159,6 @@ int parse_parameters(int argn, char **argv,
         struct arg_str *distance_parameter_string            = arg_str0(NULL, "distance_parameter_string", NULL, "Specify as 1:10:100 if cores on the same chip have distance 1, PEs in the same rack have distance 10, ... and so forth.");
         struct arg_lit *online_distances                     = arg_lit0(NULL, "online_distances", "Do not store processor distances in a matrix, but do recomputation. (Default: disabled)");
 
-#ifdef MODE_CLUSTER_COARSENING
-        //cluster coarsening stuff
-        //
-        //
-        struct arg_str *bcc_clustering_mode = arg_str0(NULL, "bcc-clustering", NULL, "Normal or shallow clustering via VieClus One of: none, default, shallow, shallownolp. Default: none.");
-        struct arg_int *bcc_full_cluster_contraction = arg_int0(NULL, "bcc-full-cluster-contraction", NULL, "Generate new clustering for every contraction level. Default: 0 = disabled.");
-        struct arg_int *bcc_time_limit = arg_int0(NULL, "bcc-time-limit", NULL, "Time limit for VieClus in seconds. Default: 0");
-        struct arg_str *bcc_combine_mode = arg_str0(NULL, "bcc-combine", NULL, "Use first or second partition index. Default: second");
-#endif
-
         struct arg_end *end                                  = arg_end(100);
 
         // Define argtable.
@@ -264,9 +254,6 @@ int parse_parameters(int argn, char **argv,
                 cluster_upperbound,
                 label_propagation_iterations,
                 filename_output,
-#endif
-#ifdef MODE_CLUSTER_COARSENING
-                bcc_clustering_mode, bcc_full_cluster_contraction, bcc_time_limit, bcc_combine_mode,
 #endif
                 end
         };
@@ -1059,54 +1046,6 @@ int parse_parameters(int argn, char **argv,
         } else {
                 partition_config.cluster_upperbound = std::numeric_limits< NodeWeight >::max()/2;
         }
-
-#ifdef MODE_CLUSTER_COARSENING
-        if (bcc_clustering_mode->count > 0) {
-                partition_config.bcc_enable = true;
-                std::string arg = bcc_clustering_mode->sval[0];
-                if (arg == "none") {
-                        // nothing to do
-                } else if (arg == "default") {
-                        partition_config.bcc_default_clustering = true;
-                } else if (arg == "shallow") {
-                        partition_config.bcc_shallow_clustering = true;
-                } else if (arg == "shallownolp") {
-                        partition_config.bcc_shallow_no_lp_clustering = true;
-                } else {
-                        fprintf(stderr, "Invalid clustering mode: \"%s\"\n", arg.c_str());
-                        exit(0);
-                }
-        }
-        if (bcc_full_cluster_contraction->count > 0) {
-                if (!partition_config.bcc_enable) {
-                        fprintf(stderr, "Invalid configuration: can't enable bcc_full_cluster_contraction without bcc_clustering_mode\n");
-                        exit(0);
-                }
-                partition_config.bcc_full_cluster_contraction = true;
-        }
-        if (bcc_time_limit->count > 0) {
-                if (!partition_config.bcc_enable) {
-                        fprintf(stderr, "Invalid configuration: can't set bcc_time_limit without bcc_clustering_mode\n");
-                        exit(0);
-                }
-                partition_config.bcc_time_limit = bcc_time_limit->ival[0];
-        }
-        if (bcc_combine_mode->count > 0) {
-                if (!partition_config.bcc_enable) {
-                        fprintf(stderr, "Invalid configuration: can't set bcc_time_limit without bcc_clustering_mode\n");
-                        exit(0);
-                }
-                std::string arg = bcc_combine_mode->sval[0];
-                if (arg == "first") {
-                        partition_config.bcc_combine = 1;
-                } else if (arg == "second") {
-                        partition_config.bcc_combine = 2;
-                } else {
-                        fprintf(stderr, "Illegal value for bcc-combine-mode\n");
-                        exit(0);
-                }
-        }
-#endif
 
         return 0;
 }
