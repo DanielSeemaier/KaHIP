@@ -105,7 +105,8 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
 
         delete edge_matcher;
 
-        if (partition_config.bcc_mode != BCC_NO_CLUSTERING
+        if (partition_config.bcc_verify
+            && partition_config.bcc_mode != BCC_NO_CLUSTERING
             && partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX
             && !partition_config.initial_partitioning) {
             if (partition_config.matching_type == CLUSTER_COARSENING) {

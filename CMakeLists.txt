@@ -171,8 +171,8 @@ set(LIBMAPPING_SOURCE_FILES
   lib/mapping/construct_mapping.cpp)
 add_library(libmapping OBJECT ${LIBMAPPING_SOURCE_FILES})
 
-set(LIBSPAC_SOURCE_FILES OBJECT lib/spac/spac.cpp)
-add_library(libspac ${LIBSPAC_SOURCE_FILES})
+set(LIBSPAC_SOURCE_FILES lib/spac/spac.cpp)
+add_library(libspac OBJECT ${LIBSPAC_SOURCE_FILES})
 
 set(LIBCLUSTER_COARSENING_FILES lib/bcc/VieClusAdapter.cpp
   lib/bcc/ExternalPartitionMap.cpp lib/bcc/ModularityMetric.cpp lib/bcc/ModularityMetric.h lib/bcc/MappingVerifier.cpp lib/bcc/MappingVerifier.h)
