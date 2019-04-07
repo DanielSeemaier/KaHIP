@@ -531,6 +531,7 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.bcc_mode = BCC_NO_CLUSTERING;
         partition_config.bcc_vieclus_mode = VIECLUS_NORMAL;
         partition_config.bcc_combine_mode = BCC_SECOND_PARTITION_INDEX;
+        partition_config.bcc_continue_coarsening = false;
 }
 
 inline void configuration::standardsnw( PartitionConfig & partition_config ) {

@@ -35,6 +35,7 @@ static struct option options[] = {
         {"clustering-mode", required_argument, nullptr, 'm'},
         {"vieclus-mode", required_argument, nullptr, 'M'},
         {"combine-mode", required_argument, nullptr, 'c'},
+        {"continue-coarsening", no_argument, nullptr, 'C'},
         {nullptr, 0, nullptr, 0}
 };
 
@@ -63,6 +64,7 @@ static void _print_help() {
               << "\t--clustering-mode=[no_clustering, toplevel, multilevel]\n"
               << "\t--vieclus-mode=[default, shallow, shallownolp]\n"
               << "\t--combine-mode=[second, first]\n"
+              << "\t--continue-coarsening (fallback to normal coarsening after cluster coarsening converged)\n"
               << std::endl;
 }
 
@@ -76,6 +78,7 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
     std::string clustering_mode_name;
     std::string vieclus_mode_name;
     std::string combine_mode_name;
+    bool continue_coarsening = false;
 
     while (true) {
         int index;
@@ -125,6 +128,10 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
 
             case 'c': // --combine-mode
                 combine_mode_name = optarg;
+                break;
+
+            case 'C': // --continue-coarsening
+                continue_coarsening = true;
                 break;
 
             case '?':
@@ -186,9 +193,16 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
         else throw std::runtime_error("Invalid value for --combine-mode: "s + combine_mode_name);
     }
 
+    if (continue_coarsening && partition_config.bcc_mode == BCC_NO_CLUSTERING) {
+        throw std::runtime_error("--continue-coarsening is only useful for --clustering-mode=[toplevel, multilevel]");
+    }
+
+    std::cout << "[BCC] preconfiguration=" << preconfiguration_name << std::endl;
+
     partition_config.seed = seed;
     partition_config.bcc_time_limit = time_limit;
     partition_config.bcc_verify = verify;
+    partition_config.bcc_continue_coarsening = continue_coarsening;
     partition_config.LogDump(stdout);
 
     return partition_config;
@@ -204,7 +218,7 @@ int main(int argc, char **argv) {
     // load graph G
     graph_access G;
     graph_io::readGraphWeighted(G, partition_config.graph_filename);
-    std::cout << "[BCC] io_time=" << t.elapsed() << std::endl;
+    std::cout << "[BCC] time(io)=" << t.elapsed() << std::endl;
     G.set_partition_count(partition_config.k);
     std::cout << "[BCC] n(G)=" << G.number_of_nodes()
               << "; m(G)=" << G.number_of_edges()
@@ -225,7 +239,7 @@ int main(int argc, char **argv) {
     // perform partitioning
     t.restart();
     graph_partitioner().perform_partitioning(partition_config, G);
-    std::cout << "[BCC] partitioner_time=" << t.elapsed() << std::endl;
+    std::cout << "[BCC] time(partitioning)=" << t.elapsed() << std::endl;
 
     // print some statistics
     quality_metrics qm;

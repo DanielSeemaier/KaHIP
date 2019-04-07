@@ -68,18 +68,16 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
         Matching edge_matching;
         NodePermutationMap permutation;
 
-        bool bcc_calculate_clustering = partition_config.bcc_mode == BCC_MULTILEVEL
-                                        && !partition_config.initial_partitioning;
-        if (bcc_calculate_clustering) {
+        if (copy_of_partition_config.bcc_mode == BCC_MULTILEVEL) {
             BCC::ExternalPartitionMap backup;
-            if (partition_config.bcc_combine_mode == BCC_FIRST_PARTITION_INDEX) {
+            if (copy_of_partition_config.bcc_combine_mode == BCC_FIRST_PARTITION_INDEX) {
                 backup.set(*finer);
             }
 
-            std::cout << "[BCCInfo] Calculating  a clustering on level " << level << std::endl;
+            std::cout << "[BCCInfo] Calculating a clustering on level " << level << std::endl;
             BCC::compute_and_set_clustering(*finer, copy_of_partition_config);
 
-            if (partition_config.bcc_combine_mode == BCC_FIRST_PARTITION_INDEX) {
+            if (copy_of_partition_config.bcc_combine_mode == BCC_FIRST_PARTITION_INDEX) {
                 // BCC::compute_and_set_clustering() stores the clustering as graph partition, i.e. using setPartitionIndex()
                 // thus we copy it to coarser_mapping[] and switch the matching_type to coarsening, then restore its
                 // original partition (for vcycle 2+)
@@ -95,28 +93,29 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
         }
 
         coarsening_config.configure_coarsening(copy_of_partition_config, &edge_matcher, level);
-        if (partition_config.matching_type != CLUSTER_COARSENING)
+        if (copy_of_partition_config.matching_type != CLUSTER_COARSENING)
             rating.rate(*finer, level);
 
-        if (!bcc_calculate_clustering || partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
+        if (copy_of_partition_config.bcc_mode == BCC_NO_CLUSTERING
+            || copy_of_partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
             edge_matcher->match(copy_of_partition_config, *finer, edge_matching,
                                 *coarse_mapping, no_of_coarser_vertices, permutation);
         }
 
         delete edge_matcher;
 
-        if (partition_config.bcc_verify
-            && partition_config.bcc_mode != BCC_NO_CLUSTERING
-            && partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX
-            && !partition_config.initial_partitioning) {
-            if (partition_config.matching_type == CLUSTER_COARSENING) {
+        // if enabled, verify that no cut edges (in the clustering) were contracted
+        if (copy_of_partition_config.bcc_verify
+            && copy_of_partition_config.bcc_mode != BCC_NO_CLUSTERING
+            && copy_of_partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
+            if (copy_of_partition_config.matching_type == CLUSTER_COARSENING) {
                 BCC::verify_mapping(*finer, *coarse_mapping, copy_of_partition_config);
             } else {
                 BCC::verify_mapping(*finer, edge_matching, copy_of_partition_config);
             }
         }
 
-        if (partition_config.graph_allready_partitioned) {
+        if (copy_of_partition_config.graph_allready_partitioned) {
             contracter->contract_partitioned(copy_of_partition_config, *finer, *coarser, edge_matching,
                                              *coarse_mapping, no_of_coarser_vertices, permutation);
         } else {
@@ -127,10 +126,17 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
         hierarchy.push_back(finer, coarse_mapping);
         contraction_stop = coarsening_stop_rule->stop(no_of_finer_vertices, no_of_coarser_vertices);
 
+        // --continue-coarsening: if enabled, switch to normal coarsening once the cluster guided coarsening converged
+        if (!contraction_stop && copy_of_partition_config.bcc_continue_coarsening) {
+            contraction_stop = true;
+            copy_of_partition_config.disable_bcc();
+            copy_of_partition_config.matching_type = partition_config.matching_type;
+            copy_of_partition_config.combine = false;
+            std::cout << "[BCC] continue_coarsening_after_level=" << level << std::endl;
+        }
+
         no_of_finer_vertices = no_of_coarser_vertices;
-
         finer = coarser;
-
         level++;
     } while (contraction_stop);
 

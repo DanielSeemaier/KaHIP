@@ -400,12 +400,21 @@ struct PartitionConfig {
     int bcc_time_limit;
     bool bcc_full_cluster_contraction;
     int bcc_combine;
+
     bool bcc_verify;
     BCCMode bcc_mode;
     VieClusMode bcc_vieclus_mode;
     BCCCombineMode bcc_combine_mode;
+    bool bcc_continue_coarsening;
 
     void LogDump(FILE *out) const {
+    }
+
+    void disable_bcc() {
+        bcc_mode = BCC_NO_CLUSTERING;
+        bcc_verify = false;
+        bcc_continue_coarsening = false;
+        combine = false;
     }
 
     friend std::ostream &operator<<(std::ostream &os, const PartitionConfig &config) {
@@ -581,6 +590,7 @@ struct PartitionConfig {
            << ", bcc_mode=" << bcc_mode_to_string(config.bcc_mode)
            << ", bcc_vieclus_mode=" << vieclus_mode_to_string(config.bcc_vieclus_mode)
            << ", bcc_combine_mode=" << bcc_combine_mode_to_string(config.bcc_combine_mode)
+           << ", bcc_continue_coarsening=" << config.bcc_continue_coarsening
            << "}";
         return os;
     }

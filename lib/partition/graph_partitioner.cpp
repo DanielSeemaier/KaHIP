@@ -177,7 +177,11 @@ void graph_partitioner::perform_recursive_partitioning_internal(PartitionConfig 
 
 void graph_partitioner::single_run(PartitionConfig &config, graph_access &G) {
 
+    timer vcycle_timer;
+
     for (unsigned i = 1; i <= config.global_cycle_iterations; i++) {
+        vcycle_timer.restart();
+
         if (!config.initial_partitioning) {
             std::cout << "[BCC] graph_already_partitioned=" << config.graph_allready_partitioned << ";"
                       << " current_vcycle=" << i << ";"
@@ -242,12 +246,8 @@ void graph_partitioner::single_run(PartitionConfig &config, graph_access &G) {
                               << " m_ratio(level_" << level << ")=" << no_edges / base_no_edges << std::endl;
                 }
 
-            }
-
-            if (config.bcc_mode == BCC_MULTILEVEL
-                && !config.initial_partitioning
-                && config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
-                config.combine = true;
+                // disable cluster guided coarsening
+                config.disable_bcc();
             }
 
             // initial partitioning
@@ -282,8 +282,14 @@ void graph_partitioner::single_run(PartitionConfig &config, graph_access &G) {
         if (!config.initial_partitioning) {
             quality_metrics qm;
             std::cout << "[BCC] cut(post_vcycle_" << i << ")=" << qm.edge_cut(G) << ";"
-                      << " balance(post_vcycle_" << i << ")=" << qm.balance(G) << std::endl;
+                      << " balance(post_vcycle_" << i << ")=" << qm.balance(G) << ";"
+                      << " time(vcycle_" << i << ")=" << vcycle_timer.elapsed()
+                      << std::endl;
         }
+
+        // disable clustering stuff for following v-cycles
+        config.combine = false;
+        config.bcc_mode = BCC_NO_CLUSTERING;
 
         config.graph_allready_partitioned = true;
         config.balance_factor = 0;

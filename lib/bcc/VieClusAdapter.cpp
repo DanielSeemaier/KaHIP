@@ -12,6 +12,8 @@ using namespace std::string_literals;
 
 namespace BCC {
     double compute_and_set_clustering(graph_access &G, PartitionConfig &partition_config) {
+        timer technical_timer;
+
         VieClus::Graph graph{
                 G.number_of_nodes(),
                 G.UNSAFE_metis_style_xadj_array(),
@@ -86,6 +88,7 @@ namespace BCC {
             partition_config.combine = true;
         }
 
+        std::cout << "[BCC] time(technical_VieClus)=" << technical_timer.elapsed() << std::endl;
         return modularity;
     }
 }
