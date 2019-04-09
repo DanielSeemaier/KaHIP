@@ -123,6 +123,13 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
                                  *coarse_mapping, no_of_coarser_vertices, permutation);
         }
 
+        if (!copy_of_partition_config.initial_partitioning)
+            std::cout << "[BCCInfo] contracted to " << coarser->number_of_nodes() << " nodes, "
+                      << coarser->number_of_edges() << " edges, combine: " << copy_of_partition_config.combine
+                      << ", bcc_mode: " << bcc_mode_to_string(copy_of_partition_config.bcc_mode)
+                      << ", matching_type: " << matching_type_to_string(copy_of_partition_config.matching_type)
+                      << std::endl;
+
         hierarchy.push_back(finer, coarse_mapping);
         contraction_stop = coarsening_stop_rule->stop(no_of_finer_vertices, no_of_coarser_vertices);
 
