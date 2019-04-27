@@ -15,14 +15,38 @@ namespace BCC {
         timer technical_timer;
 
         VieClus::Graph graph{
-                G.number_of_nodes(),
+                static_cast<unsigned int>(G.number_of_nodes()),
                 G.UNSAFE_metis_style_xadj_array(),
                 G.UNSAFE_metis_style_adjncy_array(),
                 G.UNSAFE_metis_style_vwgt_array(),
-                G.UNSAFE_metis_style_adjwgt_array()
+                G.UNSAFE_metis_style_adjwgt_array(),
+                nullptr
         };
         int clustering_k = -1;
         auto partition_map = std::make_unique<int[]>(G.number_of_nodes());
+
+        if (partition_config.bcc_reuse_clustering && G.hasSecondPartitionIndexSet()) {
+            std::cout << "[BCCInfo] Reusing the clustering" << std::endl;
+            graph.clustering = new int[G.number_of_nodes()];
+            for (NodeID v = 0; v < G.number_of_nodes(); ++v) {
+                graph.clustering[v] = G.getSecondPartitionIndex(v);
+            }
+
+            if (partition_config.bcc_verify) {
+                ExternalPartitionMap partition(G);
+                PartitionID k = 0;
+                for (NodeID v = 0; v < G.number_of_nodes(); ++v) {
+                    k = std::max(k, G.getSecondPartitionIndex(v));
+                    G.setPartitionIndex(v, G.getSecondPartitionIndex(v));
+                }
+                G.set_partition_count(k + 1);
+                double initial_modularity = ModularityMetric::computeModularity(G);
+                partition.apply(G);
+
+                std::cout << "[BCCInfo] Running VieClus on an existing clustering with modularity "
+                          << initial_modularity << std::endl;
+            }
+        }
 
         timer t;
         double modularity;
@@ -68,6 +92,7 @@ namespace BCC {
         delete[] graph.adjncy;
         delete[] graph.vwgt;
         delete[] graph.adjwgt;
+        delete[] graph.clustering;
 
         // check modularity score to make sure that the call to VieClus worked out
         if (partition_config.bcc_verify) {

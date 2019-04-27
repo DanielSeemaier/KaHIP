@@ -152,7 +152,7 @@ class complete_boundary;
 class graph_access {
         friend class complete_boundary;
         public:
-                graph_access() { m_max_degree_computed = false; m_max_degree = 0; graphref = new basicGraph(); m_separator_block_ID = 2;}
+                graph_access() { m_max_degree_computed = false; m_max_degree = 0; graphref = new basicGraph(); m_separator_block_ID = 2; m_second_partition_index_set = false; }
                 virtual ~graph_access(){ delete graphref; };
 
                 /* ============================================================= */
@@ -183,6 +183,7 @@ class graph_access {
 
                 PartitionID getSecondPartitionIndex(NodeID node);
                 void setSecondPartitionIndex(NodeID node, PartitionID id);
+                bool hasSecondPartitionIndexSet();
 
                 //to be called if combine in meta heuristic is used
                 void resizeSecondPartitionIndex(unsigned no_nodes);
@@ -222,6 +223,7 @@ class graph_access {
                 EdgeWeight   m_max_degree;
                 PartitionID  m_separator_block_ID;
                 std::vector<PartitionID> m_second_partition_index;
+                bool m_second_partition_index_set;
 };
 
 /* graph build methods */
@@ -279,11 +281,16 @@ inline PartitionID graph_access::getSecondPartitionIndex(NodeID node) {
 }
 
 inline void graph_access::setSecondPartitionIndex(NodeID node, PartitionID id) {
+        m_second_partition_index_set = true;
 #ifdef NDEBUG
         m_second_partition_index[node] = id;
 #else
         m_second_partition_index.at(node) = id;
 #endif
+}
+
+inline bool graph_access::hasSecondPartitionIndexSet() {
+        return m_second_partition_index_set;
 }
 
 

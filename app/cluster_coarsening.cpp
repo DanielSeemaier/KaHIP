@@ -36,6 +36,7 @@ static struct option options[] = {
         {"vieclus-mode", required_argument, nullptr, 'M'},
         {"combine-mode", required_argument, nullptr, 'c'},
         {"continue-coarsening", no_argument, nullptr, 'C'},
+        {"reuse-clustering", no_argument, nullptr, 'R'},
         {nullptr, 0, nullptr, 0}
 };
 
@@ -65,6 +66,7 @@ static void _print_help() {
               << "\t--vieclus-mode=[default, shallow, shallownolp]\n"
               << "\t--combine-mode=[second, first]\n"
               << "\t--continue-coarsening (fallback to normal coarsening after cluster coarsening converged)\n"
+              << "\t--reuse-clustering (use old clustering as initial clustering when calculating a new one)\n"
               << std::endl;
 }
 
@@ -79,6 +81,7 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
     std::string vieclus_mode_name;
     std::string combine_mode_name;
     bool continue_coarsening = false;
+    bool reuse_clustering = false;
 
     while (true) {
         int index;
@@ -132,6 +135,10 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
 
             case 'C': // --continue-coarsening
                 continue_coarsening = true;
+                break;
+
+            case 'R':
+                reuse_clustering = true;
                 break;
 
             case '?':
@@ -203,6 +210,7 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
     partition_config.bcc_time_limit = time_limit;
     partition_config.bcc_verify = verify;
     partition_config.bcc_continue_coarsening = continue_coarsening;
+    partition_config.bcc_reuse_clustering = reuse_clustering;
     partition_config.LogDump(stdout);
 
     return partition_config;

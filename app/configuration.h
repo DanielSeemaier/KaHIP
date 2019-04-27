@@ -10,6 +10,7 @@
 #define CONFIGURATION_3APG5V7Z
 
 #include "partition/partition_config.h"
+#include "../lib/partition/partition_config.h"
 
 class configuration {
         public:
@@ -532,6 +533,7 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.bcc_vieclus_mode = VIECLUS_NORMAL;
         partition_config.bcc_combine_mode = BCC_SECOND_PARTITION_INDEX;
         partition_config.bcc_continue_coarsening = false;
+        partition_config.bcc_reuse_clustering = false;
 }
 
 inline void configuration::standardsnw( PartitionConfig & partition_config ) {

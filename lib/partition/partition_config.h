@@ -406,6 +406,7 @@ struct PartitionConfig {
     VieClusMode bcc_vieclus_mode;
     BCCCombineMode bcc_combine_mode;
     bool bcc_continue_coarsening;
+    bool bcc_reuse_clustering;
 
     void LogDump(FILE *out) const {
     }
@@ -415,6 +416,7 @@ struct PartitionConfig {
         bcc_verify = false;
         bcc_continue_coarsening = false;
         combine = false;
+        bcc_reuse_clustering = false;
     }
 
     friend std::ostream &operator<<(std::ostream &os, const PartitionConfig &config) {
@@ -591,6 +593,7 @@ struct PartitionConfig {
            << ", bcc_vieclus_mode=" << vieclus_mode_to_string(config.bcc_vieclus_mode)
            << ", bcc_combine_mode=" << bcc_combine_mode_to_string(config.bcc_combine_mode)
            << ", bcc_continue_coarsening=" << config.bcc_continue_coarsening
+           << ", bcc_reuse_clustering=" << config.bcc_reuse_clustering
            << "}";
         return os;
     }
