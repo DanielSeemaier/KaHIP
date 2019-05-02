@@ -4,5 +4,5 @@ config.log
 optimized/
 optimized_output/
 data/
-cmake-build-debug
+cmake-build-*/
 build

@@ -35,6 +35,8 @@ void size_constraint_label_propagation::match(const PartitionConfig & partition_
                                               CoarseMapping & coarse_mapping, 
                                               NodeID & no_of_coarse_vertices,
                                               NodePermutationMap & permutation) {
+        if (partition_config.combine) std::cout << "[BCCInfo] Contracting with respect to second partition index" << std::endl;
+
         permutation.resize(G.number_of_nodes());
         coarse_mapping.resize(G.number_of_nodes());
         no_of_coarse_vertices = 0;

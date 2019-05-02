@@ -23,7 +23,7 @@ void random_matching::match(const PartitionConfig & partition_config,
                             CoarseMapping & coarse_mapping,
                             NodeID & no_of_coarse_vertices,
                             NodePermutationMap & permutation) {
-
+        if (partition_config.combine) std::cout << "[BCCInfo] Contracting with respect to second partition index" << std::endl;
 
         permutation.resize(G.number_of_nodes());
         edge_matching.resize(G.number_of_nodes());
