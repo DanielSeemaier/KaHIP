@@ -52,14 +52,26 @@ namespace BCC {
         double modularity;
 
         if (partition_config.bcc_vieclus_mode == VIECLUS_NORMAL) {
-            modularity = VieClus::run_default(graph, partition_config.bcc_time_limit, partition_config.seed,
-                                              &clustering_k, partition_map.get());
+            modularity = VieClus::run_default(graph,
+                                              partition_config.bcc_time_limit,
+                                              partition_config.bcc_max_clustering_iterations,
+                                              partition_config.seed,
+                                              &clustering_k,
+                                              partition_map.get());
         } else if (partition_config.bcc_vieclus_mode == VIECLUS_SHALLOW) {
-            modularity = VieClus::run_shallow(graph, partition_config.bcc_time_limit, partition_config.seed,
-                                              &clustering_k, partition_map.get());
+            modularity = VieClus::run_shallow(graph,
+                                            partition_config.bcc_time_limit,
+                                            partition_config.bcc_max_clustering_iterations,
+                                            partition_config.seed,
+                                            &clustering_k,
+                                            partition_map.get());
         } else if (partition_config.bcc_vieclus_mode == VIECLUS_SHALLOW_NO_LP) {
-            modularity = VieClus::run_shallow_no_lp(graph, partition_config.bcc_time_limit, partition_config.seed,
-                                                    &clustering_k, partition_map.get());
+            modularity = VieClus::run_shallow_no_lp(graph,
+                                            partition_config.bcc_time_limit,
+                                            partition_config.bcc_max_clustering_iterations,
+                                            partition_config.seed,
+                                            &clustering_k,
+                                            partition_map.get());
         } else {
             throw std::runtime_error("Invalid value for PartitionConfig::bcc_vieclus_mode: "s
                                      + std::to_string(partition_config.bcc_vieclus_mode));

@@ -18,6 +18,7 @@
 #include "tools/quality_metrics.h"
 #include "tools/random_functions.h"
 #include "io/graph_io.h"
+#include "tools/timer.h"
 
 #include "size_constraint_label_propagation.h"
 
@@ -35,7 +36,10 @@ void size_constraint_label_propagation::match(const PartitionConfig & partition_
                                               CoarseMapping & coarse_mapping, 
                                               NodeID & no_of_coarse_vertices,
                                               NodePermutationMap & permutation) {
+        std::cout << "[BCCInfo] Running LP with max " << partition_config.label_iterations << " iterations" << std::endl;
+        std::cout << "[BCC] limit_iteratioins=" << partition_config.label_iterations << std::endl;
         if (partition_config.combine) std::cout << "[BCCInfo] Contracting with respect to second partition index" << std::endl;
+        timer t;
 
         permutation.resize(G.number_of_nodes());
         coarse_mapping.resize(G.number_of_nodes());
@@ -46,6 +50,8 @@ void size_constraint_label_propagation::match(const PartitionConfig & partition_
         } else {
                 match_internal(partition_config, G, _matching, coarse_mapping, no_of_coarse_vertices, permutation);
         }
+
+        std::cout << "[BCC] time(size_constrained_LP)=" << t.elapsed() << std::endl;
 }
 
 void size_constraint_label_propagation::match_internal(const PartitionConfig & partition_config, 

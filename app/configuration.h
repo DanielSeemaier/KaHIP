@@ -534,6 +534,7 @@ inline void configuration::standard( PartitionConfig & partition_config ) {
         partition_config.bcc_combine_mode = BCC_SECOND_PARTITION_INDEX;
         partition_config.bcc_continue_coarsening = false;
         partition_config.bcc_reuse_clustering = false;
+        partition_config.bcc_max_clustering_iterations = 0;
 }
 
 inline void configuration::standardsnw( PartitionConfig & partition_config ) {

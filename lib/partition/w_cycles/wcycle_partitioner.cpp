@@ -99,7 +99,8 @@ int wcycle_partitioner::perform_partitioning_recursive( PartitionConfig & partit
         if (copy_of_partition_config.matching_type != CLUSTER_COARSENING)
             rating.rate(*finer, m_level);
 
-        if (copy_of_partition_config.bcc_mode == BCC_NO_CLUSTERING
+        if (copy_of_partition_config.initial_partitioning
+            || copy_of_partition_config.bcc_mode == BCC_NO_CLUSTERING
             || copy_of_partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
           edge_matcher->match(copy_of_partition_config, *finer, edge_matching, *coarse_mapping, no_of_coarser_vertices,
                               permutation);
@@ -141,16 +142,16 @@ int wcycle_partitioner::perform_partitioning_recursive( PartitionConfig & partit
                 cfg.upper_bound_partition = (factor +1.0)*partition_config.upper_bound_partition;
 
                 std::cout << "[BCCInfo] performing initial_partitioning on level " << m_level << std::endl;
-	        initial_partitioning init_part;
-		init_part.perform_initial_partitioning(cfg, *coarser);
+	              initial_partitioning init_part;
+		            init_part.perform_initial_partitioning(cfg, *coarser);
 
-		        quality_metrics qm;
-		        std::cout << "[BCC] level=" << m_level
-		                << "; no_nodes(level_" << m_level << ")=" << coarser->number_of_nodes()
-		                << "; no_edges(level_" << m_level << ")=" << coarser->number_of_edges()
-		                << "; initial_cut(level_" << m_level << ")=" << qm.edge_cut(*coarser)
-		                << "; balance(level_" << m_level << ")=" << qm.balance(*coarser)
-		                << "; no_blocks(level_" << m_level << ")=" << coarser->get_partition_count() << std::endl;
+		            quality_metrics qm;
+                std::cout << "[BCC] level=" << m_level
+                        << "; no_nodes(level_" << m_level << ")=" << coarser->number_of_nodes()
+                        << "; no_edges(level_" << m_level << ")=" << coarser->number_of_edges()
+                        << "; initial_cut(level_" << m_level << ")=" << qm.edge_cut(*coarser)
+                        << "; balance(level_" << m_level << ")=" << qm.balance(*coarser)
+                        << "; no_blocks(level_" << m_level << ")=" << coarser->get_partition_count() << std::endl;
 
                 if(!partition_config.label_propagation_refinement) coarser_boundary->build();
 

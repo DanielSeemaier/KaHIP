@@ -197,11 +197,6 @@ void graph_partitioner::single_run(PartitionConfig &config, graph_access &G) {
         }
 
         if (config.use_wcycles || config.use_fullmultigrid) {
-            if (config.bcc_mode == BCC_MULTILEVEL
-                && !config.initial_partitioning
-                && config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
-                config.combine = true;
-            }
             wcycle_partitioner w_partitioner;
             w_partitioner.perform_partitioning(config, G);
         } else {
@@ -246,8 +241,7 @@ void graph_partitioner::single_run(PartitionConfig &config, graph_access &G) {
                               << " m_ratio(level_" << level << ")=" << no_edges / base_no_edges << std::endl;
                 }
 
-                // disable cluster guided coarsening
-                config.disable_bcc();
+                config.combine = false;
             }
 
             // initial partitioning
@@ -285,11 +279,8 @@ void graph_partitioner::single_run(PartitionConfig &config, graph_access &G) {
                       << " balance(post_vcycle_" << i << ")=" << qm.balance(G) << ";"
                       << " time(vcycle_" << i << ")=" << vcycle_timer.elapsed()
                       << std::endl;
+            std::cout << "[BCCInfo] ================================================================================" << std::endl;
         }
-
-        // disable clustering stuff for following v-cycles
-        config.combine = false;
-        config.bcc_mode = BCC_NO_CLUSTERING;
 
         config.graph_allready_partitioned = true;
         config.balance_factor = 0;

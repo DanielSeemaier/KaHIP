@@ -407,6 +407,7 @@ struct PartitionConfig {
     BCCCombineMode bcc_combine_mode;
     bool bcc_continue_coarsening;
     bool bcc_reuse_clustering;
+    int bcc_max_clustering_iterations;
 
     void LogDump(FILE *out) const {
     }
@@ -417,6 +418,7 @@ struct PartitionConfig {
         bcc_continue_coarsening = false;
         combine = false;
         bcc_reuse_clustering = false;
+        bcc_max_clustering_iterations = 0;
     }
 
     friend std::ostream &operator<<(std::ostream &os, const PartitionConfig &config) {
@@ -594,6 +596,7 @@ struct PartitionConfig {
            << ", bcc_combine_mode=" << bcc_combine_mode_to_string(config.bcc_combine_mode)
            << ", bcc_continue_coarsening=" << config.bcc_continue_coarsening
            << ", bcc_reuse_clustering=" << config.bcc_reuse_clustering
+           << ", bcc_max_clustering_iterations=" << config.bcc_max_clustering_iterations
            << "}";
         return os;
     }

@@ -68,7 +68,7 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
         Matching edge_matching;
         NodePermutationMap permutation;
 
-        if (copy_of_partition_config.bcc_mode == BCC_MULTILEVEL) {
+        if (copy_of_partition_config.bcc_mode == BCC_MULTILEVEL && !copy_of_partition_config.initial_partitioning) {
             BCC::ExternalPartitionMap backup;
             if (copy_of_partition_config.bcc_combine_mode == BCC_FIRST_PARTITION_INDEX) {
                 backup.set(*finer);
@@ -96,7 +96,8 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
         if (copy_of_partition_config.matching_type != CLUSTER_COARSENING)
             rating.rate(*finer, level);
 
-        if (copy_of_partition_config.bcc_mode == BCC_NO_CLUSTERING
+        if (copy_of_partition_config.initial_partitioning
+            || copy_of_partition_config.bcc_mode == BCC_NO_CLUSTERING
             || copy_of_partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
             edge_matcher->match(copy_of_partition_config, *finer, edge_matching,
                                 *coarse_mapping, no_of_coarser_vertices, permutation);
@@ -105,7 +106,8 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
         delete edge_matcher;
 
         // if enabled, verify that no cut edges (in the clustering) were contracted
-        if (copy_of_partition_config.bcc_verify
+        if (!copy_of_partition_config.initial_partitioning
+            && copy_of_partition_config.bcc_verify
             && copy_of_partition_config.bcc_mode != BCC_NO_CLUSTERING
             && copy_of_partition_config.bcc_combine_mode == BCC_SECOND_PARTITION_INDEX) {
             if (copy_of_partition_config.matching_type == CLUSTER_COARSENING) {
@@ -134,7 +136,9 @@ coarsening::perform_coarsening(const PartitionConfig &partition_config, graph_ac
         contraction_stop = coarsening_stop_rule->stop(no_of_finer_vertices, no_of_coarser_vertices);
 
         // --continue-coarsening: if enabled, switch to normal coarsening once the cluster guided coarsening converged
-        if (!contraction_stop && copy_of_partition_config.bcc_continue_coarsening) {
+        if (!copy_of_partition_config.initial_partitioning
+            && !contraction_stop
+            && copy_of_partition_config.bcc_continue_coarsening) {
             contraction_stop = true;
             copy_of_partition_config.disable_bcc();
             copy_of_partition_config.matching_type = partition_config.matching_type;

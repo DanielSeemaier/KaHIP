@@ -37,6 +37,7 @@ static struct option options[] = {
         {"combine-mode", required_argument, nullptr, 'c'},
         {"continue-coarsening", no_argument, nullptr, 'C'},
         {"reuse-clustering", no_argument, nullptr, 'R'},
+        {"max-clustering-iterations", required_argument, nullptr, 'I'},
         {nullptr, 0, nullptr, 0}
 };
 
@@ -67,6 +68,7 @@ static void _print_help() {
               << "\t--combine-mode=[second, first]\n"
               << "\t--continue-coarsening (fallback to normal coarsening after cluster coarsening converged)\n"
               << "\t--reuse-clustering (use old clustering as initial clustering when calculating a new one)\n"
+              << "\t--max-clustering-iterations (limits the number of LP or LV iterations, whichever coarsening algorithm is used)\n"
               << std::endl;
 }
 
@@ -82,6 +84,7 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
     std::string combine_mode_name;
     bool continue_coarsening = false;
     bool reuse_clustering = false;
+    int max_clustering_iterations = 0;
 
     while (true) {
         int index;
@@ -137,8 +140,12 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
                 continue_coarsening = true;
                 break;
 
-            case 'R':
+            case 'R': // --reuse-clustering
                 reuse_clustering = true;
+                break;
+
+            case 'I': // --max-clustering-iterations
+                max_clustering_iterations = std::stoi(optarg);
                 break;
 
             case '?':
@@ -211,6 +218,8 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
     partition_config.bcc_verify = verify;
     partition_config.bcc_continue_coarsening = continue_coarsening;
     partition_config.bcc_reuse_clustering = reuse_clustering;
+    partition_config.bcc_max_clustering_iterations = max_clustering_iterations;
+    if (max_clustering_iterations > 0) partition_config.label_iterations = max_clustering_iterations;
     partition_config.LogDump(stdout);
 
     return partition_config;
