@@ -72,6 +72,15 @@ namespace BCC {
                                             partition_config.seed,
                                             &clustering_k,
                                             partition_map.get());
+        } else if (partition_config.bcc_vieclus_mode == VIECLUS_SHALLOW_NO_LP_SIZE_CONSTRAINED) {
+            unsigned int upper_bound = std::ceil(partition_config.upper_bound_partition / static_cast<double>(partition_config.cluster_coarsening_factor));
+            modularity = VieClus::run_shallow_no_lp_size_constrained(graph,
+                                            partition_config.bcc_time_limit,
+                                            partition_config.bcc_max_clustering_iterations,
+                                            upper_bound,
+                                            partition_config.seed,
+                                            &clustering_k,
+                                            partition_map.get());
         } else {
             throw std::runtime_error("Invalid value for PartitionConfig::bcc_vieclus_mode: "s
                                      + std::to_string(partition_config.bcc_vieclus_mode));

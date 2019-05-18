@@ -64,7 +64,7 @@ static void _print_help() {
               << "\t--verify (enable some time consuming checks)\n"
               << "\t--time-limit=integer (time limit for VieClus evolutionary algorithm)\n"
               << "\t--clustering-mode=[no_clustering, toplevel, multilevel]\n"
-              << "\t--vieclus-mode=[default, shallow, shallownolp]\n"
+              << "\t--vieclus-mode=[default, shallow, shallownolp, shallownolp_sizeconstrained]\n"
               << "\t--combine-mode=[second, first]\n"
               << "\t--continue-coarsening (fallback to normal coarsening after cluster coarsening converged)\n"
               << "\t--reuse-clustering (use old clustering as initial clustering when calculating a new one)\n"
@@ -198,6 +198,7 @@ static PartitionConfig _parse_arguments(int argc, char **argv) {
         if (vieclus_mode_name == "default") partition_config.bcc_vieclus_mode = VIECLUS_NORMAL;
         else if (vieclus_mode_name == "shallow") partition_config.bcc_vieclus_mode = VIECLUS_SHALLOW;
         else if (vieclus_mode_name == "shallownolp") partition_config.bcc_vieclus_mode = VIECLUS_SHALLOW_NO_LP;
+        else if (vieclus_mode_name == "shallownolp_sizeconstrained") partition_config.bcc_vieclus_mode = VIECLUS_SHALLOW_NO_LP_SIZE_CONSTRAINED;
         else throw std::runtime_error("Invalid value for --vieclus-mode: "s + vieclus_mode_name);
     }
 

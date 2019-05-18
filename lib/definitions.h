@@ -367,6 +367,7 @@ typedef enum {
         VIECLUS_NORMAL,
         VIECLUS_SHALLOW,
         VIECLUS_SHALLOW_NO_LP,
+        VIECLUS_SHALLOW_NO_LP_SIZE_CONSTRAINED,
 } VieClusMode;
 
 inline std::string vieclus_mode_to_string(VieClusMode vieclus_mode) {
@@ -374,6 +375,7 @@ inline std::string vieclus_mode_to_string(VieClusMode vieclus_mode) {
         case VIECLUS_NORMAL: return "VIECLUS_NORMAL";
         case VIECLUS_SHALLOW: return "VIECLUS_SHALLOW";
         case VIECLUS_SHALLOW_NO_LP: return "VIECLUS_SHALLOW_NO_LP";
+        case VIECLUS_SHALLOW_NO_LP_SIZE_CONSTRAINED: return "VIECLUS_SHALLOW_NO_LP_SIZE_CONSTRAINED";
         default: return std::to_string(vieclus_mode);
     }
 }
