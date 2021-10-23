@@ -92,9 +92,14 @@ int parallel_graph_io::readGraphWeightedFlexible(parallel_graph_access & G,
         }
         
         // pe p reads the lines p*ceil(n/size) to (p+1)floor(n/size) lines of that file
-        ULONG from  = peID     * ceil(nmbNodes / (double)comm_size);
-        ULONG to    = (peID+1) * ceil(nmbNodes / (double)comm_size) - 1;
-        to = std::min(to, nmbNodes-1);
+	///        ULONG from  = peID     * ceil(nmbNodes / (double)comm_size);
+	//        ULONG to    = (peID+1) * ceil(nmbNodes / (double)comm_size) - 1;
+	//        to = std::min(to, nmbNodes-1);
+	        ULONG chunk = nmbNodes / comm_size;
+        ULONG remainder = nmbNodes % comm_size;
+        ULONG from = peID * chunk + std::min(static_cast<ULONG>(peID), remainder);
+        ULONG to = from + ((peID < remainder) ? chunk + 1 : chunk) - 1;
+        to = std::min(to, nmbNodes - 1);
 
         ULONG local_no_nodes = to - from + 1;
         PRINT(std::cout <<  "peID " <<  peID <<  " from " <<  from <<  " to " <<  to  <<  " amount " <<  local_no_nodes << std::endl;);
@@ -151,7 +156,8 @@ int parallel_graph_io::readGraphWeightedFlexible(parallel_graph_access & G,
 
         std::vector< NodeID > vertex_dist( comm_size+1, 0 );
         for( PEID peID = 0; peID <= comm_size; peID++) {
-                vertex_dist[peID] = peID * ceil(nmbNodes / (double)comm_size); // from positions
+	  //                vertex_dist[peID] = peID * ceil(nmbNodes / (double)comm_size); // from positions
+	                   vertex_dist[peID] = peID * chunk + std::min(static_cast<ULONG>(peID), remainder);; // from positions
         }
         G.set_range_array(vertex_dist);
 
@@ -573,9 +579,15 @@ int parallel_graph_io::readGraphBinary(PPartitionConfig & config, parallel_graph
                         std::ifstream file;
                         file.open(filename.c_str(), std::ios::binary | std::ios::in);
 
-                        ULONG from = peID * ceil(n / (double)size);
-                        ULONG to   = (peID +1) * ceil(n / (double)size) - 1;
-                        to = std::min(to, n-1);
+			//                        ULONG from = peID * ceil(n / (double)size);
+			//                        ULONG to   = (peID +1) * ceil(n / (double)size) - 1;
+			
+                        ULONG chunk = n / size;
+                        ULONG remainder = n % size;
+                        ULONG from = peID * chunk + std::min(static_cast<ULONG>(peID), remainder);
+                        ULONG to = from + ((peID < remainder) ? chunk + 1 : chunk) - 1;
+			to = std::min(to, n-1);
+
 
                         ULONG local_no_nodes = to - from + 1;
                         std::cout <<  "peID " <<  peID <<  " from " <<  from <<  " to " <<  to  <<  " amount " <<  local_no_nodes << std::endl;
@@ -598,7 +610,8 @@ int parallel_graph_io::readGraphBinary(PPartitionConfig & config, parallel_graph
 
                         std::vector< NodeID > vertex_dist( size+1, 0 );
                         for( PEID peID = 0; peID <= size; peID++) {
-                                vertex_dist[peID] = peID * ceil(n / (double)size); // from positions
+			  //        vertex_dist[peID] = peID * ceil(n / (double)size); // from positions
+			  vertex_dist[peID] = peID * chunk + std::min(static_cast<ULONG>(peID), remainder); // from positions
                         }
                         G.set_range_array(vertex_dist);
 

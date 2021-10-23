@@ -11,14 +11,14 @@ Darwin)
 esac
 [ -n "$NCORES" ] || NCORES=4
 
-rm -rf deploy
+#rm -rf deploy
 rm -rf build
 mkdir build
 
 if [ "$1" == "BUILDPYTHONMODULE" ]; then
     cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DBUILDPYTHONMODULE=On
 else
-    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release $1
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DOPTIMIZED_OUTPUT=On $1
 fi
 (cd build && make -j $NCORES)
 

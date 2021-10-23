@@ -54,6 +54,9 @@ void parallel_contraction::contract_to_distributed_quotient( MPI_Comm communicat
 
         redistribute_hased_graph_and_build_graph_locally( communicator, hG, node_weights, number_of_distinct_labels, Q );
         update_ghost_nodes_weights( communicator, Q );
+
+	std::cout << "[INFO] G_n=" << G.number_of_local_nodes() << " G_m=" << G.number_of_local_edges() << " G_gn=" << G.number_of_ghost_nodes()
+		  << " Q_n=" << Q.number_of_local_nodes() << " Q_m=" << Q.number_of_local_edges() << " Q_gn=" << Q.number_of_ghost_nodes() << std::endl;
 }
 
 void parallel_contraction::compute_label_mapping( MPI_Comm communicator, parallel_graph_access & G, 
